@@ -159,21 +159,27 @@
 
 <script>
 // ══════════════════════════════════════════════════════════
-//  台灣廣播電台完整資料庫
+//  台灣廣播電台完整資料庫（依地區分組）
 // ══════════════════════════════════════════════════════════
 const regions = [
   {
     id:'national', label:'全國 / 聯播',
     stations:[
       {name:'中廣流行網 I like Radio',     url:'https://stream.rcs.revma.com/p2e3rfg3qtzuv',                                                    icon:'🎵',genre:'POP'},
-      // ✨ 修改點 2：設定中廣音樂網音量為 0.7
+      // ✨ 這裡已經幫你把音量設為 0.7 了
       {name:'中廣音樂網 i Radio FM96.3',   url:'https://stream.rcs.revma.com/ypqvqy63ywzuv',                                                    icon:'🎶',genre:'MUSIC', volume: 0.7},
       {name:'九八新聞台 News98 FM98.1',    url:'https://stream.rcs.revma.com/pntx1639ntzuv.m4a',                                                icon:'📰',genre:'NEWS'},
       {name:'飛碟電台 UFO FM92.1',         url:'https://stream.rcs.revma.com/em90w4aeewzuv',                                                    icon:'🛸',genre:'POP'},
       {name:'ICRT FM100',                  url:'https://stream.rcs.revma.com/nkdfurztxp3vv',                                                    icon:'🌐',genre:'ENG'},
       {name:'RTI 央廣 國語頻道',            url:'https://streamak0138.akamaized.net/live0138lh-mbm9/_definst_/rti3/playlist.m3u8',              icon:'📡',genre:'NEWS'},
       {name:'警廣全國交通網 PBS',            url:'http://stream.pbs.gov.tw:1935/live/mp3:PBS/playlist.m3u8',                                    icon:'🚦',genre:'TRAFFIC'},
-      {name:'古典音樂台 Classical FM97.7',  url:'http://59.120.88.155:8000/live.mp3',                                                           icon:'Violin',genre:'CLASS'},
+      {name:'古典音樂台 Classical FM97.7',  url:'http://59.120.88.155:8000/live.mp3',                                                           icon:'🎻',genre:'CLASS'},
+      {name:'大愛網路電台',                  url:'https://stream.radiojar.com/eme6n6k3rxhvv',                                                    icon:'☯️',genre:'LIFE'},
+      {name:'漁業廣播電臺',                  url:'https://stream.rcs.revma.com/mk0c5vq122hvv',                                                   icon:'🎣',genre:'GOV'},
+      {name:'寶島客家廣播 FM93.7',           url:'http://43.254.16.40:8000/TP.FM93.7',                                                          icon:'🏮',genre:'HAKKA'},
+      {name:'新客家廣播 FM93.5',             url:'http://live.fm935newhakka.com.tw:5006/live',                                                   icon:'🏮',genre:'HAKKA'},
+      {name:'寶島新聲 FM98.5',               url:'http://125.227.87.206:8000/FM98.5',                                                            icon:'🏝️',genre:'LOCAL'},
+      {name:'美聲廣播 FM91.5',               url:'http://1.34.23.16:8080/broadwavehigh.mp3',                                                    icon:'🎤',genre:'MUSIC'},
     ]
   },
   {
@@ -181,27 +187,102 @@ const regions = [
     stations:[
       {name:'Hit FM 台北 FM91.7',            url:'http://202.39.43.67:1935/live/RA000036/chunklist.m3u8',                                       icon:'🔥',genre:'HIT'},
       {name:'好事聯播網 Best FM98.9 北部',    url:'https://stream.rcs.revma.com/fkdywbc59duvv',                                                  icon:'😊',genre:'POP'},
+      {name:'環宇廣播電台 FM96.7',            url:'https://stream.rcs.revma.com/srn5f9kmwxhvv',                                                  icon:'🌏',genre:'NEWS'},
+      {name:'台北廣播電台 FM93.1',            url:'https://stream.ginnet.cloud/live0130lo-yfyo/_definst_/fm/playlist.m3u8',                     icon:'🗼',genre:'LOCAL'},
+      {name:'世新廣播電台 FM88.1',            url:'https://stream.ginnet.cloud/live0115lo-89xv/_definst_/fm881/playlist.m3u8',                  icon:'🎓',genre:'UNI'},
+      {name:'ASIA FM 亞洲電台 FM92.7',        url:'https://stream.rcs.revma.com/xpgtqc74hv8uv',                                                 icon:'🌏',genre:'POP'},
+      {name:'ASIA FM 亞太電台 FM92.3',        url:'https://stream.rcs.revma.com/kydend74hv8uv',                                                 icon:'🌏',genre:'POP'},
+      {name:'ASIA FM 飛揚調頻 FM89.5',        url:'https://stream.rcs.revma.com/e0tdah74hv8uv',                                                 icon:'🌏',genre:'POP'},
       {name:'城市廣播 台北健康 FM90.1',        url:'http://fm901.cityfm.tw:8080/901.mp3',                                                        icon:'🏙️',genre:'LOCAL'},
+      {name:'大樹下廣播電台 FM90.5',           url:'http://60.250.148.112:8000/live',                                                             icon:'🌳',genre:'LOCAL'},
+      {name:'幸福廣播電台 FM102.5',            url:'http://61.218.61.251:8080/',                                                                  icon:'🌸',genre:'REL'},
+      {name:'微微笑 北台灣之聲 FM107.1',       url:'http://211.72.65.62:8080/',                                                                  icon:'😊',genre:'LOCAL'},
+      {name:'輔大之聲 FM88.5',                url:'http://140.136.115.115:8000/fjuvoice885.mp3',                                                  icon:'🎓',genre:'UNI'},
+      {name:'政大之聲 FM88.7',                url:'http://140.119.169.241:8000/ade.taiwan.mp3',                                                   icon:'🎓',genre:'UNI'},
+      {name:'警廣台北台 PBS',                  url:'http://43.254.16.40:8000/TP.FM91.3',                                                          icon:'🚓',genre:'TRAFFIC'},
+      {name:'民本廣播一台 AM1296',             url:'http://43.254.16.40:8000/TP.AM1296',                                                          icon:'📻',genre:'AM'},
+      {name:'台廣台北一台 AM1323',             url:'http://43.254.16.40:8000/TP.AM1323',                                                          icon:'📻',genre:'AM'},
     ]
   },
   {
-    id:'taichung', label:'台中 / 中部',
+    id:'taoyuan', label:'桃園 / 新竹 / 苗栗',
     stations:[
-      {name:'Hit FM 台中 FM91.5',            url:'http://202.39.43.67:1935/live/RA000037/chunklist.m3u8',                                       icon:'🔥',genre:'HIT'},
+      {name:'IC之音竹科廣播 FM97.5',          url:'https://stream.rcs.revma.com/7mnq8rt7k5zuv',                                                  icon:'💡',genre:'TECH'},
+      {name:'微微笑 桃園國際廣播 FM101.1',    url:'http://211.72.65.61:8080/',                                                                    icon:'✈️',genre:'LOCAL'},
+      {name:'微微笑 風城廣播 FM98.7 新竹',    url:'http://61.220.245.236:8080/',                                                                  icon:'💨',genre:'LOCAL'},
+      {name:'微微笑 竹塹廣播 FM90.3 新竹',    url:'http://211.72.230.118:8081/',                                                                  icon:'🏛️',genre:'LOCAL'},
+      {name:'新聲廣播電台 FM99.3 新竹',       url:'http://43.254.16.40:8000/HC.FM99.3',                                                          icon:'📻',genre:'LOCAL'},
+      {name:'苗栗正義電台 FM88.9',            url:'http://211.20.119.103:8081/',                                                                  icon:'⚖️',genre:'LOCAL'},
+      {name:'苗栗客家文化廣播 FM91.7',         url:'http://43.254.16.40:8000/ML.FM91.7',                                                          icon:'🏮',genre:'HAKKA'},
+      {name:'大漢之音 FM97.1 桃竹苗',          url:'http://43.254.16.40:8000/ML.FM97.1',                                                          icon:'🏮',genre:'HAKKA'},
+      {name:'先聲廣播電台 AM774 桃園',         url:'http://43.254.16.40:8000/TY.AM774',                                                           icon:'📻',genre:'AM'},
+      {name:'苗栗天聲廣播 AM1215',             url:'http://43.254.16.40:8000/ML.AM1215',                                                          icon:'📻',genre:'AM'},
+    ]
+  },
+  {
+    id:'taichung', label:'台中 / 彰化 / 南投',
+    stations:[
       {name:'好事聯播網 Best FM90.3 台中',    url:'https://stream.rcs.revma.com/zr7xzec59duvv',                                                  icon:'😊',genre:'POP'},
       {name:'城市廣播網 台中929 FM92.9',      url:'http://fm929.cityfm.tw:8080/929.mp3',                                                         icon:'🏙️',genre:'POP'},
+      {name:'太陽廣播電台 FM89.1',            url:'http://211.20.119.102:8081/',                                                                  icon:'☀️',genre:'LOCAL'},
       {name:'台中廣播 FM100.7',               url:'http://211.20.119.101:8081',                                                                   icon:'📻',genre:'LOCAL'},
+      {name:'微微笑 歡喜之聲 FM106.3 台中',   url:'http://59.125.41.65:8081/',                                                                   icon:'😊',genre:'LOCAL'},
+      {name:'非凡音廣播 FM98.5 台中',          url:'http://43.254.16.40:8000/TC.FM98.5',                                                          icon:'🎵',genre:'MUSIC'},
+      {name:'每日廣播電台 FM98.7 台中',        url:'http://43.254.16.40:8000/TC.FM98.7',                                                          icon:'📰',genre:'LOCAL'},
+      {name:'好家庭古典音樂 FM97.7 台中',      url:'http://43.254.16.40:8000/TC.FM97.7',                                                          icon:'🎻',genre:'CLASS'},
+      {name:'台廣南投中興台 AM963',             url:'http://43.254.16.40:8000/NT.AM963',                                                          icon:'📻',genre:'AM'},
     ]
   },
   {
-    id:'kaohsiung', label:'南部區域',
+    id:'tainan', label:'嘉義 / 台南',
     stations:[
-      {name:'Hit FM 高屏 FM90.1',            url:'http://202.39.43.67:1935/live/RA000038/chunklist.m3u8',                                       icon:'🔥',genre:'HIT'},
+      {name:'城市廣播網 台南知音 FM97.1',     url:'http://fm971.cityfm.tw:8080/971.mp3',                                                         icon:'🏙️',genre:'POP'},
+      {name:'微微笑 凱旋廣播 FM97.9 台南',   url:'http://59.125.209.209:8081/',                                                                   icon:'🎊',genre:'LOCAL'},
+      {name:'微微笑 嘉義環球廣播 FM107.1',   url:'http://60.248.53.115:8081/',                                                                    icon:'🌐',genre:'LOCAL'},
+      {name:'台南都會聲音 FM99.7',            url:'http://43.254.16.40:8000/TN.FM99.7',                                                          icon:'📻',genre:'LOCAL'},
+      {name:'電聲廣播電台 AM1071 台南',       url:'http://43.254.16.40:8000/TN.AM1071',                                                          icon:'📻',genre:'AM'},
+      {name:'雲嘉電台 FM93.3',               url:'http://43.254.16.40:8000/CY.FM93.3',                                                           icon:'🌾',genre:'LOCAL'},
+      {name:'嘉義北回電台 FM91.7',            url:'http://43.254.16.40:8000/CY.FM91.7',                                                          icon:'📻',genre:'LOCAL'},
+      {name:'嘉義之音 FM91.3',               url:'http://43.254.16.40:8000/CY.FM91.3',                                                           icon:'📻',genre:'LOCAL'},
+      {name:'大千電台 FM99.1 中部',           url:'http://125.227.87.206:8000/FM99.1',                                                           icon:'🔔',genre:'LOCAL'},
+    ]
+  },
+  {
+    id:'kaohsiung', label:'高雄 / 屏東',
+    stations:[
       {name:'好事聯播網 港都 FM98.3 高雄',   url:'https://stream.rcs.revma.com/q2m07dc59duvv',                                                   icon:'😊',genre:'POP'},
+      {name:'下港之聲 FM90.5 高雄',          url:'http://59.120.255.155:8081/',                                                                   icon:'⚓',genre:'LOCAL'},
+      {name:'警廣高雄台 FM89.3',             url:'http://43.254.16.40:8000/KS.FM89.3',                                                           icon:'🚦',genre:'TRAFFIC'},
+      {name:'雲端新電台 FM99.5 高雄',        url:'http://43.254.16.40:8000/KS.FM99.5',                                                           icon:'☁️',genre:'POP'},
+      {name:'港都電台 FM98.3',               url:'http://43.254.16.40:8000/KS.FM98.3',                                                           icon:'🚢',genre:'LOCAL'},
+      {name:'主人電台 FM96.9 高屏',           url:'http://125.227.87.206:8000/FM96.9',                                                           icon:'📻',genre:'LOCAL'},
+      {name:'微微笑 屏東之聲 FM92.5',        url:'http://59.120.255.169:8081/',                                                                   icon:'🌴',genre:'LOCAL'},
+      {name:'微微笑 潮州之聲 FM90.9 屏東',   url:'http://59.120.255.170:8081/',                                                                   icon:'🏡',genre:'LOCAL'},
+      {name:'微微笑 大武山廣播 FM91.3 屏東', url:'http://59.120.255.171:8081/',                                                                   icon:'⛰️',genre:'LOCAL'},
+    ]
+  },
+  {
+    id:'east', label:'宜蘭 / 花蓮 / 台東',
+    stations:[
+      {name:'微微笑 噶瑪蘭廣播 FM97.9 宜蘭',url:'http://61.220.209.152:8081/',                                                                    icon:'🌾',genre:'LOCAL'},
+      {name:'花蓮希望之聲 FM90.5',          url:'http://61.219.59.31:8081/',                                                                      icon:'🌅',genre:'REL'},
+      {name:'東華之聲 (花蓮大學)',           url:'http://radio.ndhu.edu.tw/radio.mp3',                                                             icon:'🎓',genre:'UNI'},
+      {name:'花蓮燕聲廣播 AM1242',          url:'http://43.254.16.40:8000/HL.AM1242',                                                             icon:'📻',genre:'AM'},
+      {name:'農鄉廣播電台 FM106.3 宜蘭',    url:'http://43.254.16.40:8000/YL.FM106.3',                                                            icon:'🚜',genre:'LOCAL'},
+      {name:'濁水溪廣播 FM90.1 宜蘭',       url:'http://43.254.16.40:8000/YL.FM90.1',                                                            icon:'💧',genre:'LOCAL'},
+    ]
+  },
+  {
+    id:'islands', label:'外島 / 離島',
+    stations:[
+      {name:'微微笑 大金廣播 FM106.3 金門', url:'http://211.72.65.63:8080/',                                                                      icon:'🏝️',genre:'LOCAL'},
+      {name:'益世電台 AM1404 基隆',         url:'http://43.254.16.40:8000/KL.AM1404',                                                             icon:'⚓',genre:'REL'},
+      {name:'勝利澎湖馬公台 AM756',          url:'http://43.254.16.40:8000/PH.AM756',                                                             icon:'🌊',genre:'GOV'},
     ]
   }
 ];
 
+// 核心狀態與播放邏輯
 const audio    = document.getElementById('audio');
 const listEl   = document.getElementById('station-list');
 const playerEl = document.getElementById('player');
@@ -269,7 +350,7 @@ function loadStation(s, card) {
   if (hls) { hls.destroy(); hls = null; }
   audio.pause(); audio.src = '';
 
-  // ✨ 修改點 3：自動設定電台音量 (沒設定則預設為 1.0)
+  // ✨ 自動調整音量，若無設定則預設為 1.0
   audio.volume = s.volume || 1.0;
 
   currentStation = s;
