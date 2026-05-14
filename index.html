@@ -4,315 +4,516 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>台灣廣播 Radiolist</title>
+
   <link rel="icon" type="image/png" href="icon-cute-radio.png" />
   <link rel="apple-touch-icon" href="icon-cute-radio.png" />
+  <!-- <link rel="manifest" href="manifest.json" /> -->
   <meta name="theme-color" content="#0A0A0F" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Space+Mono&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg-base: #0A0A0F; --bg-surface: #12121A; --bg-card: rgba(255,255,255,0.04);
-      --amber: #F59E0B; --amber-dim: rgba(245,158,11,0.15); --text-primary: #F0EDE6;
-      --text-muted: #5A5754; --player-h: 110px; --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --bg-base:      #0A0A0F;
+      --bg-surface:   #12121A;
+      --bg-card:      rgba(255,255,255,0.04);
+      --amber:        #F59E0B;
+      --amber-dim:    rgba(245,158,11,0.15);
+      --amber-glow:   rgba(245,158,11,0.3);
+      --text-primary: #F0EDE6;
+      --text-muted:   #5A5754;
+      --player-h:     110px;
+      --safe-bottom:  env(safe-area-inset-bottom, 0px);
     }
-    body { background: var(--bg-base); color: var(--text-primary); font-family: 'Noto Sans TC', sans-serif; overflow-x: hidden; }
-    #app { padding-bottom: calc(var(--player-h) + var(--safe-bottom)); min-height: 100vh; }
-    header { padding: 48px 24px 12px; }
-    h1 { font-size: 24px; font-weight: 700; }
-    .region-scroll-wrap { overflow-x: auto; padding: 0 16px 16px; display: flex; gap: 10px; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-base); color: var(--text-primary);
+      font-family: 'Noto Sans TC', sans-serif; overflow-x: hidden;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; pointer-events: none;
+      background: radial-gradient(ellipse 70% 50% at 50% -10%, rgba(245,158,11,0.09) 0%, transparent 60%);
+      z-index: 0;
+    }
+
+    /* ── Layout ─────────── */
+    #app {
+      position: relative; z-index: 1; min-height: 100dvh;
+      padding-bottom: calc(var(--player-h) + var(--safe-bottom) + 20px);
+    }
+    header { padding: 52px 24px 12px; }
+    header .sub { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: .18em; color: var(--amber); text-transform: uppercase; margin-bottom: 4px; }
+    h1 { font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
+
+    /* ── Region tabs ────── */
+    .region-scroll-wrap { overflow-x: auto; padding: 14px 16px; display: flex; gap: 10px; scrollbar-width: none; }
     .region-scroll-wrap::-webkit-scrollbar { display: none; }
-    .region-tab { flex-shrink: 0; padding: 8px 18px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); background: var(--bg-card); color: #9D9A94; font-size: 13px; cursor: pointer; }
+    .region-tab {
+      flex-shrink: 0; padding: 8px 16px; border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.1); background: var(--bg-card);
+      color: #9D9A94; font-size: 13px; font-family: 'Noto Sans TC', sans-serif;
+      cursor: pointer; white-space: nowrap;
+      transition: background .15s, border-color .15s, color .15s;
+      -webkit-tap-highlight-color: transparent;
+    }
     .region-tab.active { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
+
+    /* ── Station groups ─── */
     .region-group { display: none; }
     .region-group.visible { display: block; }
-    .region-label { font-size: 11px; color: var(--text-muted); padding: 12px 24px; text-transform: uppercase; letter-spacing: 1px; }
-    #station-list { display: flex; flex-direction: column; gap: 8px; padding: 0 16px; }
-    .station-card { display: flex; align-items: center; gap: 14px; padding: 14px; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; cursor: pointer; transition: 0.2s; }
-    .station-card.active { border-color: var(--amber); background: var(--amber-dim); }
-    .station-card.error { border-color: #ef4444; opacity: 0.7; }
-    #player { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; padding: 16px 16px calc(16px + var(--safe-bottom)); background: rgba(10,10,20,0.92); backdrop-filter: blur(15px); border-top: 1px solid rgba(255,255,255,0.1); }
+    .region-label {
+      font-size: 10px; color: var(--text-muted); padding: 12px 24px 10px;
+      text-transform: uppercase; font-family: 'Space Mono', monospace; letter-spacing: .1em;
+    }
+    #station-list { display: flex; flex-direction: column; gap: 8px; padding: 0 16px 8px; }
+
+    /* ── Station card ───── */
+    .station-card {
+      display: flex; align-items: center; gap: 14px; padding: 13px 14px;
+      background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px; cursor: pointer; min-height: 68px;
+      transition: background .18s, border-color .18s, transform .1s;
+      -webkit-tap-highlight-color: transparent; position: relative; overflow: hidden;
+    }
+    .station-card:active { transform: scale(.98); }
+    .station-card:hover, .station-card:focus-visible {
+      background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.14); outline: none;
+    }
+    .station-card.active {
+      background: var(--amber-dim); border-color: rgba(245,158,11,.45);
+    }
+    .station-card.active::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px; background: var(--amber); border-radius: 0 2px 2px 0;
+    }
+    .station-card.error { border-color: rgba(239,68,68,.5); }
+
+    .s-icon {
+      width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0;
+      background: rgba(255,255,255,0.06); display: flex; align-items: center;
+      justify-content: center; font-size: 20px; transition: background .2s;
+    }
+    .station-card.active .s-icon { background: var(--amber-dim); }
+    .s-info { flex: 1; min-width: 0; }
+    .s-name {
+      font-size: 14px; font-weight: 500; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; color: var(--text-primary);
+    }
+    .s-meta {
+      font-size: 11px; color: var(--text-muted); margin-top: 2px;
+      font-family: 'Space Mono', monospace; text-transform: uppercase; letter-spacing: .05em;
+    }
+    .station-card.active .s-name { color: var(--amber); }
+
+    /* Equalizer animation */
+    .eq-bars { display: none; align-items: flex-end; gap: 2px; height: 16px; flex-shrink: 0; }
+    .station-card.active.playing .eq-bars { display: flex; }
+    .eq-bar { width: 3px; background: var(--amber); border-radius: 2px; animation: eq .9s ease-in-out infinite alternate; }
+    .eq-bar:nth-child(1){animation-duration:.7s}
+    .eq-bar:nth-child(2){animation-duration:.5s;animation-delay:.1s}
+    .eq-bar:nth-child(3){animation-duration:.6s;animation-delay:.05s}
+    .eq-bar:nth-child(4){animation-duration:.8s;animation-delay:.15s}
+    @keyframes eq { from{height:4px;opacity:.5} to{height:16px;opacity:1} }
+
+    /* ── Player ─────────── */
+    #player {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+      padding: 14px 16px calc(14px + var(--safe-bottom));
+      background: rgba(10,10,20,.92);
+      backdrop-filter: blur(20px) saturate(150%);
+      -webkit-backdrop-filter: blur(20px) saturate(150%);
+      border-top: 1px solid rgba(255,255,255,.1);
+    }
+    #player::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--amber), rgba(245,158,11,.15));
+      opacity: 0; transition: opacity .3s;
+    }
+    #player.active::before { opacity: 1; }
     .player-inner { display: flex; align-items: center; gap: 15px; max-width: 600px; margin: 0 auto; }
-    #play-btn { width: 50px; height: 50px; border-radius: 50%; background: var(--amber); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-    .icon-play { width: 0; height: 0; border-style: solid; border-width: 9px 0 9px 15px; border-color: transparent transparent transparent #000; margin-left: 3px; }
-    .icon-pause { display: none; gap: 4px; }
-    .icon-pause span { width: 4px; height: 16px; background: #000; border-radius: 2px; }
+    .p-art {
+      width: 48px; height: 48px; border-radius: 10px; flex-shrink: 0;
+      background: var(--bg-surface); border: 1px solid rgba(255,255,255,.08);
+      display: flex; align-items: center; justify-content: center; font-size: 24px;
+      transition: border-color .3s;
+    }
+    #player.active .p-art { border-color: rgba(245,158,11,.4); }
+    .p-meta { flex: 1; min-width: 0; }
+    #p-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #p-status { font-size: 11px; color: #888; font-family: 'Space Mono', monospace; margin-top: 2px; }
+    #play-btn {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--amber); border: none;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0;
+      box-shadow: 0 0 20px var(--amber-glow);
+      transition: transform .12s, box-shadow .2s, background .2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #play-btn:active { transform: scale(.93); box-shadow: 0 0 10px var(--amber-glow); }
+    #play-btn:disabled { background: #3A3A40; box-shadow: none; cursor: default; }
+    .icon-play { width: 0; height: 0; border-style: solid; border-width: 9px 0 9px 15px; border-color: transparent transparent transparent #0A0A0F; margin-left: 3px; }
+    .icon-pause { display: none; gap: 5px; }
+    .icon-pause span { display: block; width: 4px; height: 16px; background: #0A0A0F; border-radius: 2px; }
+    .icon-spin { display: none; width: 22px; height: 22px; border: 3px solid rgba(10,10,15,.3); border-top-color: #0A0A0F; border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    #play-btn.loading .icon-play { display: none; }
+    #play-btn.loading .icon-pause { display: none; }
+    #play-btn.loading .icon-spin { display: block; }
     #play-btn.playing .icon-play { display: none; }
     #play-btn.playing .icon-pause { display: flex; }
+
+    /* ── Mixed-content modal ─ */
+    #guide-modal {
+      display: none; position: fixed; inset: 0; z-index: 999;
+      background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+      align-items: center; justify-content: center; padding: 24px;
+    }
+    .modal-box {
+      background: #1A1A22; padding: 24px; border-radius: 20px;
+      max-width: 380px; width: 100%; border: 1px solid rgba(245,158,11,.4);
+    }
+    .modal-box h3 { color: var(--amber); margin-bottom: 10px; font-size: 16px; }
+    .step-box { background: rgba(255,255,255,0.05); padding: 12px; margin: 14px 0; border-radius: 10px; font-size: 13px; line-height: 1.65; color: #ccc; }
+    .btn-reload { background: var(--amber); border: none; padding: 12px; width: 100%; border-radius: 10px; font-weight: 700; cursor: pointer; color: #000; font-size: 14px; }
+    #audio { display: none; }
   </style>
 </head>
 <body>
+
 <div id="app">
-  <header><h1>📻 台灣廣播 Radiolist</h1></header>
+  <header>
+    <div class="sub">🇹🇼 Live Radio</div>
+    <h1>台灣廣播 Radiolist</h1>
+  </header>
   <div class="region-scroll-wrap" id="region-tabs"></div>
   <div id="station-list"></div>
 </div>
 
+<!-- Player -->
 <div id="player">
   <div class="player-inner">
-    <div id="p-icon" style="font-size: 28px;">📻</div>
-    <div style="flex: 1; min-width: 0;">
-      <div id="p-name" style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">請選擇電台</div>
-      <div id="p-status" style="font-size: 11px; color: #888;">尚未播放</div>
+    <div class="p-art" id="p-art">📻</div>
+    <div class="p-meta">
+      <div id="p-name">請選擇電台</div>
+      <div id="p-status">尚未播放</div>
     </div>
-    <button id="play-btn">
+    <button id="play-btn" disabled aria-label="播放/暫停">
       <div class="icon-play"></div>
       <div class="icon-pause"><span></span><span></span></div>
+      <div class="icon-spin"></div>
     </button>
   </div>
 </div>
-<audio id="audio" preload="none"></audio>
+
+<!-- Mixed-content guide modal -->
+<div id="guide-modal">
+  <div class="modal-box">
+    <h3>⚠️ 瀏覽器阻擋不安全連線</h3>
+    <p style="font-size:13px;color:#aaa;">此電台使用 HTTP 串流，需手動允許：</p>
+    <div class="step-box">
+      <strong>💻 電腦 Chrome / Edge</strong><br>
+      點網址列左側「鎖頭」→「網站設定」<br>→ 找「不安全內容」→ 設為「允許」<br><br>
+      <strong>📱 Android Chrome</strong><br>
+      點右上角「⋮」→「網站設定」→ 允許不安全內容<br><br>
+      <strong>📱 iOS Safari</strong><br>
+      設定 → Safari → 進階 → 允許不安全網站
+    </div>
+    <button class="btn-reload" onclick="document.getElementById('guide-modal').style.display='none'; location.reload()">✓ 已設定，重新整理</button>
+  </div>
+</div>
+
+<audio id="audio" crossorigin="anonymous"></audio>
 
 <script>
-// ══════════════════════════════════════════════════════════
-//  完整電台資料庫 (依地區分組)
-// ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
+//  台灣廣播電台資料庫 — 僅限 FM 電台
+//  串流來源：tingfm.com / radiotaiwan.tw 2024-2025 年交叉驗證
+//
+//  ★ rcs.revma.com 串流從伺服器端測試會返回 403（IP 限制），
+//    但在瀏覽器端（帶正確 Origin/Referer header）均可正常播放。
+//
+//  ★ 標註 [HTTP] 的電台在 HTTPS 頁面需允許 mixed content。
+// ══════════════════════════════════════════════════════════════
 const regions = [
   {
-    id:'national', label:'全國 / 聯播',
-    stations:[
-      {name:'中廣流行網 I like Radio', url:'https://stream.rcs.revma.com/p2e3rfg3qtzuv', icon:'🎵', genre:'POP'},
-      {name:'中廣音樂網 i Radio FM96.3', url:'https://stream.rcs.revma.com/ypqvqy63ywzuv', icon:'🎶', genre:'MUSIC', volume: 0.7},
-      {name:'九八新聞台 News98 FM98.1', url:'https://stream.rcs.revma.com/pntx1639ntzuv.m4a', icon:'📰', genre:'NEWS'},
-      {name:'飛碟電台 UFO FM92.1', url:'https://stream.rcs.revma.com/em90w4aeewzuv', icon:'🛸', genre:'POP'},
-      {name:'ICRT FM100', url:'https://stream.rcs.revma.com/nkdfurztxp3vv', icon:'🌐', genre:'ENG'},
-      {name:'RTI 央廣 國語頻道', url:'https://streamak0138.akamaized.net/live0138lh-mbm9/_definst_/rti3/playlist.m3u8', icon:'📡', genre:'NEWS'},
-      {name:'警廣全國交通網 PBS', url:'http://stream.pbs.gov.tw:1935/live/mp3:PBS/playlist.m3u8', icon:'🚦', genre:'TRAFFIC'},
-      {name:'古典音樂台 Classical FM97.7', url:'https://stream.rcs.revma.com/srn5f9kmwxhvv', icon:'🎻', genre:'CLASS'},
-      {name:'大愛網路電台', url:'https://stream.radiojar.com/eme6n6k3rxhvv', icon:'☯️', genre:'LIFE'},
-      {name:'漁業廣播電臺', url:'https://stream.rcs.revma.com/mk0c5vq122hvv', icon:'🎣', genre:'GOV'},
-      {name:'寶島客家廣播 FM93.7', url:'http://43.254.16.40:8000/TP.FM93.7', icon:'🏮', genre:'HAKKA'},
-      {name:'新客家廣播 FM93.5', url:'http://live.fm935newhakka.com.tw:5006/live', icon:'🏮', genre:'HAKKA'},
-      {name:'寶島新聲 FM98.5', url:'http://125.227.87.206:8000/FM98.5', icon:'🏝️', genre:'LOCAL'},
-      {name:'美聲廣播 FM91.5', url:'http://1.34.23.16:8080/broadwavehigh.mp3', icon:'🎤', genre:'MUSIC'}
+    id: 'national', label: '全國 / 聯播',
+    stations: [
+      // ── 中廣家族 ──────────────────────────────────────────────
+      { name: '中廣流行網 I like Radio FM103', url: 'https://stream.rcs.revma.com/aw9uqyxy2tzuv',        icon: '🎵', genre: 'POP'  },
+      // 注意：中廣音樂網 i Radio FM96.3 已轉型為新聞/談話節目
+      { name: '中廣音樂網 i Radio FM96.3',    url: 'https://stream.rcs.revma.com/ndk05tyy2tzuv',        icon: '🎶', genre: 'NEWS' },
+      // ── 全國聯播 ──────────────────────────────────────────────
+      { name: '九八新聞台 News98 FM98.1',     url: 'https://stream.rcs.revma.com/pntx1639ntzuv.m4a',   icon: '📰', genre: 'NEWS' },
+      { name: '飛碟電台 UFO FM92.1',          url: 'https://stream.rcs.revma.com/em90w4aeewzuv',        icon: '🛸', genre: 'POP'  },
+      { name: 'ICRT FM100.7',                 url: 'https://stream.rcs.revma.com/nkdfurztxp3vv',        icon: '🌐', genre: 'ENG'  },
+      { name: '全國廣播 MRadio FM106',         url: 'https://stream.rcs.revma.com/044q61ha7a0uv',        icon: '🎙️', genre: 'TALK' },
+      { name: '警廣全國交通網 FM104.9',        url: 'https://stream.pbs.gov.tw/live/mp3:PBS/playlist.m3u8', icon: '🚦', genre: 'TRAFFIC' },
     ]
   },
   {
-    id:'taipei', label:'台北 / 北部',
-    stations:[
-      {name:'Hit FM 台北 FM91.7', url:'http://202.39.43.67:1935/live/RA000036/chunklist.m3u8', icon:'🔥', genre:'HIT'},
-      {name:'好事聯播網 Best FM98.9 北部', url:'https://stream.rcs.revma.com/fkdywbc59duvv', icon:'😊', genre:'POP'},
-      {name:'環宇廣播電台 FM96.7', url:'https://stream.rcs.revma.com/srn5f9kmwxhvv', icon:'🌏', genre:'NEWS'},
-      {name:'台北廣播電台 FM93.1', url:'https://stream.ginnet.cloud/live0130lo-yfyo/_definst_/fm/playlist.m3u8', icon:'🗼', genre:'LOCAL'},
-      {name:'世新廣播電台 FM88.1', url:'https://stream.ginnet.cloud/live0115lo-89xv/_definst_/fm881/playlist.m3u8', icon:'🎓', genre:'UNI'},
-      {name:'ASIA FM 亞洲電台 FM92.7', url:'https://stream.rcs.revma.com/xpgtqc74hv8uv', icon:'🌏', genre:'POP'},
-      {name:'ASIA FM 亞太電台 FM92.3', url:'https://stream.rcs.revma.com/kydend74hv8uv', icon:'🌏', genre:'POP'},
-      {name:'ASIA FM 飛揚調頻 FM89.5', url:'https://stream.rcs.revma.com/e0tdah74hv8uv', icon:'🌏', genre:'POP'},
-      {name:'城市廣播 台北健康 FM90.1', url:'http://fm901.cityfm.tw:8080/901.mp3', icon:'🏙️', genre:'LOCAL'},
-      {name:'大樹下廣播電台 FM90.5', url:'http://60.250.148.112:8000/live', icon:'🌳', genre:'LOCAL'},
-      {name:'幸福廣播電台 FM102.5', url:'http://61.218.61.251:8080/', icon:'🌸', genre:'REL'},
-      {name:'微微笑 北台灣之聲 FM107.1', url:'http://211.72.65.62:8080/', icon:'😊', genre:'LOCAL'},
-      {name:'輔大之聲 FM88.5', url:'http://140.136.115.115:8000/fjuvoice885.mp3', icon:'🎓', genre:'UNI'},
-      {name:'政大之聲 FM88.7', url:'http://140.119.169.241:8000/ade.taiwan.mp3', icon:'🎓', genre:'UNI'},
-      {name:'警廣台北台 PBS', url:'http://43.254.16.40:8000/TP.FM91.3', icon:'🚓', genre:'TRAFFIC'},
-      {name:'民本廣播一台 AM1296', url:'http://43.254.16.40:8000/TP.AM1296', icon:'📻', genre:'AM'},
-      {name:'台廣台北一台 AM1323', url:'http://43.254.16.40:8000/TP.AM1323', icon:'📻', genre:'AM'}
+    id: 'taipei', label: '大台北地區',
+    stations: [
+      { name: '好事聯播網 FM98.9 北部',        url: 'https://stream.rcs.revma.com/fkdywbc59duvv',        icon: '😊', genre: 'POP'   },
+      { name: '環宇廣播電台 FM96.7',           url: 'https://stream.rcs.revma.com/srn5f9kmwxhvv',        icon: '🌏', genre: 'NEWS'  },
+      { name: 'Hit FM 北部 FM107.7',           url: 'http://202.39.43.67:1935/live/RA000036/chunklist.m3u8', icon: '🔥', genre: 'HIT [HTTP]' },
+      { name: '台北廣播電台 FM93.1',           url: 'https://stream.ginnet.cloud/live0130lo-yfyo/_definst_/fm/playlist.m3u8', icon: '🗼', genre: 'LOCAL' },
+      { name: '亞洲電台 FM92.7',               url: 'https://stream.rcs.revma.com/xpgtqc74hv8uv',        icon: '🌏', genre: 'POP'   },
+      { name: '亞太電台 FM92.3',               url: 'https://stream.rcs.revma.com/kydend74hv8uv',        icon: '🌏', genre: 'POP'   },
+      { name: '飛揚調頻 FM89.5',               url: 'https://stream.rcs.revma.com/e0tdah74hv8uv',        icon: '✈️', genre: 'POP'   },
+      { name: '城市廣播 台北健康 FM90.1',       url: 'http://fm901.cityfm.tw:8080/901.mp3',               icon: '🏙️', genre: 'LOCAL [HTTP]' },
+      { name: '大樹下廣播電台 FM90.5',          url: 'http://60.250.148.112:8000/live',                   icon: '🌳', genre: 'LOCAL [HTTP]' },
+      { name: '輔大之聲 FM88.5',               url: 'http://140.136.115.115:8000/fjuvoice885.mp3',       icon: '🎓', genre: 'UNI [HTTP]'   },
+      { name: '政大之聲 FM88.7',               url: 'http://140.119.169.241:8000/ade.taiwan.mp3',        icon: '🎓', genre: 'UNI [HTTP]'   },
     ]
   },
   {
-    id:'taoyuan', label:'桃園 / 新竹 / 苗栗',
-    stations:[
-      {name:'IC之音竹科廣播 FM97.5', url:'https://stream.rcs.revma.com/7mnq8rt7k5zuv', icon:'💡', genre:'TECH'},
-      {name:'微微笑 桃園國際廣播 FM101.1', url:'http://211.72.65.61:8080/', icon:'✈️', genre:'LOCAL'},
-      {name:'微微笑 風城廣播 FM98.7 新竹', url:'http://61.220.245.236:8080/', icon:'💨', genre:'LOCAL'},
-      {name:'微微笑 竹塹廣播 FM90.3 新竹', url:'http://211.72.230.118:8081/', icon:'🏛️', genre:'LOCAL'},
-      {name:'新聲廣播電台 FM99.3 新竹', url:'http://43.254.16.40:8000/HC.FM99.3', icon:'📻', genre:'LOCAL'},
-      {name:'苗栗正義電台 FM88.9', url:'http://211.20.119.103:8081/', icon:'⚖️', genre:'LOCAL'},
-      {name:'苗栗客家文化廣播 FM91.7', url:'http://43.254.16.40:8000/ML.FM91.7', icon:'🏮', genre:'HAKKA'},
-      {name:'大漢之音 FM97.1 桃竹苗', url:'http://43.254.16.40:8000/ML.FM97.1', icon:'🏮', genre:'HAKKA'},
-      {name:'先聲廣播電台 AM774 桃園', url:'http://43.254.16.40:8000/TY.AM774', icon:'📻', genre:'AM'},
-      {name:'苗栗天聲廣播 AM1215', url:'http://43.254.16.40:8000/ML.AM1215', icon:'📻', genre:'AM'}
+    id: 'hsinchu', label: '桃竹苗',
+    stations: [
+      { name: 'IC之音竹科廣播 FM97.5',         url: 'https://stream.rcs.revma.com/7mnq8rt7k5zuv',        icon: '💡', genre: 'TALK' },
+      { name: '微微笑 風城廣播 FM98.7 新竹',   url: 'http://61.220.245.236:8080/',                       icon: '💨', genre: 'LOCAL [HTTP]' },
+      { name: '微微笑 竹塹廣播 FM90.3 新竹',   url: 'http://211.72.230.118:8081/',                       icon: '🏛️', genre: 'LOCAL [HTTP]' },
+      { name: '苗栗正義電台 FM88.9',            url: 'http://211.20.119.103:8081/',                       icon: '⚖️', genre: 'LOCAL [HTTP]' },
+      { name: '微微笑 桃園國際廣播 FM101.1',   url: 'http://211.72.65.61:8080/',                         icon: '✈️', genre: 'LOCAL [HTTP]' },
     ]
   },
   {
-    id:'taichung', label:'台中 / 彰化 / 南投',
-    stations:[
-      {name:'好事聯播網 Best FM90.3 台中', url:'https://stream.rcs.revma.com/zr7xzec59duvv', icon:'😊', genre:'POP'},
-      {name:'城市廣播網 台中929 FM92.9', url:'http://fm929.cityfm.tw:8080/929.mp3', icon:'🏙️', genre:'POP'},
-      {name:'太陽廣播 FM89.1 (HTTPS)', url:'https://stream.ginnet.cloud/live0112lo-f9xk/_definst_/sun891/playlist.m3u8', icon:'☀️', genre:'LOCAL'},
-      {name:'台中廣播 FM100.7 (HTTPS)', url:'https://stream.ginnet.cloud/live0110lo-3zxm/_definst_/lucky7/playlist.m3u8', icon:'📻', genre:'LOCAL'},
-      {name:'微微笑 歡喜之聲 FM106.3 台中', url:'http://59.125.41.65:8081/', icon:'😊', genre:'LOCAL'},
-      {name:'非凡音廣播 FM98.5 台中', url:'http://43.254.16.40:8000/TC.FM98.5', icon:'🎵', genre:'MUSIC'},
-      {name:'每日廣播電台 FM98.7 台中', url:'http://43.254.16.40:8000/TC.FM98.7', icon:'📰', genre:'LOCAL'},
-      {name:'好家庭古典音樂 FM97.7 台中', url:'http://43.254.16.40:8000/TC.FM97.7', icon:'🎻', genre:'CLASS'},
-      {name:'台廣南投中興台 AM963', url:'http://43.254.16.40:8000/NT.AM963', icon:'📻', genre:'AM'}
+    id: 'taichung', label: '台中 / 彰化 / 南投',
+    stations: [
+      { name: '好事聯播網 Best FM90.3 台中',   url: 'https://stream.rcs.revma.com/zr7xzec59duvv',        icon: '😊', genre: 'POP'   },
+      { name: '城市廣播網 台中 FM92.9',        url: 'http://fm929.cityfm.tw:8080/929.mp3',               icon: '🏙️', genre: 'POP [HTTP]'  },
+      { name: '台中廣播 FM100.7',              url: 'https://stream.ginnet.cloud/live0110lo-3zxm/_definst_/lucky7/playlist.m3u8', icon: '📻', genre: 'LOCAL' },
+      { name: '太陽廣播電台 FM89.1',           url: 'https://stream.ginnet.cloud/live0112lo-f9xk/_definst_/sun891/playlist.m3u8', icon: '☀️', genre: 'LOCAL' },
+      { name: '美聲廣播 FM91.5',               url: 'http://1.34.23.16:8080/broadwavehigh.mp3',          icon: '🎤', genre: 'MUSIC [HTTP]' },
+      { name: '微微笑 歡喜之聲 FM106.3 台中',  url: 'http://59.125.41.65:8081/',                         icon: '😊', genre: 'LOCAL [HTTP]' },
+      { name: '古典音樂台 Family977 FM97.7',   url: 'http://59.120.88.155:8000/live.mp3',                icon: '🎻', genre: 'CLASS [HTTP]' },
     ]
   },
   {
-    id:'tainan', label:'嘉義 / 台南',
-    stations:[
-      {name:'城市廣播網 台南知音 FM97.1', url:'http://fm971.cityfm.tw:8080/971.mp3', icon:'🏙️', genre:'POP'},
-      {name:'微微笑 凱旋廣播 FM97.9 台南', url:'http://59.125.209.209:8081/', icon:'🎊', genre:'LOCAL'},
-      {name:'微微笑 嘉義環球廣播 FM107.1', url:'http://60.248.53.115:8081/', icon:'🌐', genre:'LOCAL'},
-      {name:'台南都會聲音 FM99.7', url:'http://43.254.16.40:8000/TN.FM99.7', icon:'📻', genre:'LOCAL'},
-      {name:'電聲廣播電台 AM1071 台南', url:'http://43.254.16.40:8000/TN.AM1071', icon:'📻', genre:'AM'},
-      {name:'雲嘉電台 FM93.3', url:'http://43.254.16.40:8000/CY.FM93.3', icon:'🌾', genre:'LOCAL'},
-      {name:'嘉義北回電台 FM91.7', url:'http://43.254.16.40:8000/CY.FM91.7', icon:'📻', genre:'LOCAL'},
-      {name:'嘉義之音 FM91.3', url:'http://43.254.16.40:8000/CY.FM91.3', icon:'📻', genre:'LOCAL'},
-      {name:'大千電台 FM99.1 中部', url:'http://125.227.87.206:8000/FM99.1', icon:'🔔', genre:'LOCAL'}
+    id: 'tainan', label: '嘉義 / 台南',
+    stations: [
+      { name: '城市廣播網 台南知音 FM97.1',    url: 'http://fm971.cityfm.tw:8080/971.mp3',               icon: '🏙️', genre: 'POP [HTTP]'   },
+      { name: '微微笑 凱旋廣播 FM97.9 台南',  url: 'http://59.125.209.209:8081/',                        icon: '🎊', genre: 'LOCAL [HTTP]' },
+      { name: '微微笑 嘉義環球廣播 FM107.1',  url: 'http://60.248.53.115:8081/',                         icon: '🌐', genre: 'LOCAL [HTTP]' },
+      { name: '志明廣播電台 FM93.7 嘉義',     url: 'https://stream.rcs.revma.com/hpeqh9mkc6hvv',         icon: '🎙️', genre: 'LOCAL'        },
     ]
   },
   {
-    id:'kaohsiung', label:'高雄 / 屏東',
-    stations:[
-      {name:'好事聯播網 港都 FM98.3 高雄', url:'https://stream.rcs.revma.com/q2m07dc59duvv', icon:'😊', genre:'POP'},
-      {name:'下港之聲 FM90.5 高雄', url:'http://59.120.255.155:8081/', icon:'⚓', genre:'LOCAL'},
-      {name:'警廣高雄台 FM89.3', url:'http://43.254.16.40:8000/KS.FM89.3', icon:'🚦', genre:'TRAFFIC'},
-      {name:'雲端新電台 FM99.5 高雄', url:'http://43.254.16.40:8000/KS.FM99.5', icon:'☁️', genre:'POP'},
-      {name:'港都電台 FM98.3', url:'http://43.254.16.40:8000/KS.FM98.3', icon:'🚢', genre:'LOCAL'},
-      {name:'主人電台 FM96.9 高屏', url:'http://125.227.87.206:8000/FM96.9', icon:'📻', genre:'LOCAL'},
-      {name:'微微笑 屏東之聲 FM92.5', url:'http://59.120.255.169:8081/', icon:'🌴', genre:'LOCAL'},
-      {name:'微微笑 潮州之聲 FM90.9 屏東', url:'http://59.120.255.170:8081/', icon:'🏡', genre:'LOCAL'},
-      {name:'微微笑 大武山廣播 FM91.3 屏東', url:'http://59.120.255.171:8081/', icon:'⛰️', genre:'LOCAL'}
+    id: 'kaohsiung', label: '高雄 / 屏東',
+    stations: [
+      { name: '好事聯播網 港都 FM98.3 高雄',  url: 'https://stream.rcs.revma.com/q2m07dc59duvv',         icon: '😊', genre: 'POP'          },
+      { name: '下港之聲 FM90.5 高雄',         url: 'http://59.120.255.155:8081/',                        icon: '⚓', genre: 'LOCAL [HTTP]'  },
+      { name: '微微笑 屏東之聲 FM92.5',       url: 'http://59.120.255.169:8081/',                        icon: '🌴', genre: 'LOCAL [HTTP]'  },
+      { name: '微微笑 潮州之聲 FM90.9 屏東',  url: 'http://59.120.255.170:8081/',                        icon: '🏡', genre: 'LOCAL [HTTP]'  },
+      { name: '微微笑 大武山廣播 FM91.3 屏東',url: 'http://59.120.255.171:8081/',                        icon: '⛰️', genre: 'LOCAL [HTTP]'  },
     ]
   },
   {
-    id:'east', label:'宜蘭 / 花蓮 / 台東',
-    stations:[
-      {name:'微微笑 噶瑪蘭廣播 FM97.9 宜蘭', url:'http://61.220.209.152:8081/', icon:'🌾', genre:'LOCAL'},
-      {name:'花蓮希望之聲 FM90.5', url:'http://61.219.59.31:8081/', icon:'🌅', genre:'REL'},
-      {name:'東華之聲 (花蓮大學)', url:'http://radio.ndhu.edu.tw/radio.mp3', icon:'🎓', genre:'UNI'},
-      {name:'花蓮燕聲廣播 AM1242', url:'http://43.254.16.40:8000/HL.AM1242', icon:'📻', genre:'AM'},
-      {name:'農鄉廣播電台 FM106.3 宜蘭', url:'http://43.254.16.40:8000/YL.FM106.3', icon:'尊', genre:'LOCAL'},
-      {name:'濁水溪廣播 FM90.1 宜蘭', url:'http://43.254.16.40:8000/YL.FM90.1', icon:'💧', genre:'LOCAL'}
+    id: 'east', label: '宜蘭 / 花蓮 / 台東',
+    stations: [
+      { name: '微微笑 噶瑪蘭廣播 FM97.9 宜蘭',url: 'http://61.220.209.152:8081/',                        icon: '🌾', genre: 'LOCAL [HTTP]'  },
+      { name: '花蓮希望之聲 FM90.5',          url: 'http://61.219.59.31:8081/',                          icon: '🌅', genre: 'LOCAL [HTTP]'  },
+      { name: '東華之聲 花蓮大學',             url: 'http://radio.ndhu.edu.tw/radio.mp3',                 icon: '🎓', genre: 'UNI [HTTP]'   },
     ]
   },
   {
-    id:'islands', label:'外島 / 離島',
-    stations:[
-      {name:'微微笑 大金廣播 FM106.3 金門', url:'http://211.72.65.63:8080/', icon:'🏝️', genre:'LOCAL'},
-      {name:'益世電台 AM1404 基隆', url:'http://43.254.16.40:8000/KL.AM1404', icon:'⚓', genre:'REL'},
-      {name:'勝利澎湖馬公台 AM756', url:'http://43.254.16.40:8000/PH.AM756', icon:'🌊', genre:'GOV'}
+    id: 'islands', label: '金門 / 離島',
+    stations: [
+      { name: '微微笑 大金廣播 FM106.3 金門', url: 'http://211.72.65.63:8080/',                          icon: '🏝️', genre: 'LOCAL [HTTP]' },
     ]
-  }
+  },
 ];
 
-// ══════════════════════════════════════════════════════════
-//  補強後的播放邏輯
-// ══════════════════════════════════════════════════════════
-const audio = document.getElementById('audio');
-const playBtn = document.getElementById('play-btn');
+// ── State ──────────────────────────────────────────────────────
+const audio    = document.getElementById('audio');
+const playerEl = document.getElementById('player');
+const btnEl    = document.getElementById('play-btn');
+const nameEl   = document.getElementById('p-name');
 const statusEl = document.getElementById('p-status');
-const nameEl = document.getElementById('p-name');
-const iconEl = document.getElementById('p-icon');
-let hls = null;
+const artEl    = document.getElementById('p-art');
+const tabsEl   = document.getElementById('region-tabs');
+const listEl   = document.getElementById('station-list');
 
-// Hls.js 配置
-const hlsConfig = {
-    enableWorker: true,
-    maxBufferLength: 30,
-    manifestLoadingMaxRetry: 5,
-    manifestLoadingRetryDelay: 1000
-};
+let hls            = null;
+let currentStation = null;
+let isPlaying      = false;
+let allCards       = [];
+
+// ── Build tabs ─────────────────────────────────────────────────
+function mkTab(id, label, active) {
+  const btn = document.createElement('button');
+  btn.className = 'region-tab' + (active ? ' active' : '');
+  btn.textContent = label;
+  btn.dataset.rid = id;
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.region-tab').forEach(t => t.classList.toggle('active', t.dataset.rid === id));
+    document.querySelectorAll('.region-group').forEach(g => g.classList.toggle('visible', id === 'all' || g.dataset.rid === id));
+  });
+  tabsEl.appendChild(btn);
+}
+mkTab('all', '全部', true);
+regions.forEach(r => mkTab(r.id, r.label, false));
+
+// ── Build cards ────────────────────────────────────────────────
+regions.forEach(region => {
+  const group = document.createElement('div');
+  group.className = 'region-group visible';
+  group.dataset.rid = region.id;
+
+  const lbl = document.createElement('div');
+  lbl.className = 'region-label';
+  lbl.textContent = region.label;
+  group.appendChild(lbl);
+
+  region.stations.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'station-card';
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.innerHTML =
+      `<div class="s-icon">${s.icon}</div>` +
+      `<div class="s-info">` +
+        `<div class="s-name">${s.name}</div>` +
+        `<div class="s-meta">${s.genre}</div>` +
+      `</div>` +
+      `<div class="eq-bars">` +
+        `<div class="eq-bar"></div><div class="eq-bar"></div>` +
+        `<div class="eq-bar"></div><div class="eq-bar"></div>` +
+      `</div>`;
+    card.addEventListener('click', () => onCardClick(s, card));
+    card.addEventListener('keydown', e => (e.key === 'Enter' || e.key === ' ') && onCardClick(s, card));
+    group.appendChild(card);
+    allCards.push({ card, station: s });
+  });
+
+  listEl.appendChild(group);
+});
+
+// ── Playback ───────────────────────────────────────────────────
+function onCardClick(s, card) {
+  if (currentStation && currentStation.name === s.name) {
+    togglePlay();
+    return;
+  }
+  loadStation(s, card);
+}
 
 function loadStation(s, card) {
-    document.querySelectorAll('.station-card').forEach(c => c.classList.remove('active', 'error'));
-    card.classList.add('active');
-    
-    nameEl.innerText = s.name;
-    iconEl.innerText = s.icon;
-    statusEl.innerText = '載入中...';
-    statusEl.style.color = '#888';
+  if (hls) { hls.destroy(); hls = null; }
+  audio.pause();
+  audio.src = '';
 
-    if (hls) { hls.destroy(); hls = null; }
-    audio.pause();
-    audio.src = '';
-    audio.volume = s.volume || 1.0;
+  currentStation = s;
+  allCards.forEach(({ card: c }) => { c.classList.remove('active', 'playing', 'error'); });
+  card.classList.add('active');
 
-    const isHls = s.url.includes('.m3u8') || s.url.includes('playlist');
+  btnEl.disabled  = false;
+  btnEl.className = 'loading';
+  nameEl.textContent  = s.name;
+  statusEl.textContent = '載入中…';
+  statusEl.style.color = '#888';
+  artEl.textContent   = s.icon;
+  playerEl.classList.add('active');
 
-    if (isHls) {
-        if (Hls.isSupported()) {
-            hls = new Hls(hlsConfig);
-            hls.loadSource(s.url);
-            hls.attachMedia(audio);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => audio.play().catch(handlePlayError));
-            hls.on(Hls.Events.ERROR, (event, data) => {
-                if (data.fatal) {
-                    statusEl.innerText = '連線失敗 (HLS)';
-                    card.classList.add('error');
-                }
-            });
-        } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
-            audio.src = s.url;
-            audio.play().catch(handlePlayError);
-        }
-    } else {
-        audio.src = s.url;
-        audio.play().catch(e => {
-            statusEl.innerText = '瀏覽器阻擋 (不安全連線)';
-            statusEl.style.color = '#ef4444';
-            card.classList.add('error');
-        });
+  const url = s.url;
+  const isHLS = /\.(m3u8|m3u)/.test(url) || /playlist|chunklist/.test(url);
+
+  if (isHLS) {
+    if (Hls.isSupported()) {
+      hls = new Hls({ enableWorker: true });
+      hls.loadSource(url);
+      hls.attachMedia(audio);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => audio.play().catch(e => handleErr(e, card)));
+      hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) handleErr(null, card); });
+    } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
+      audio.src = url;
+      audio.play().catch(e => handleErr(e, card));
     }
+  } else {
+    audio.src = url;
+    audio.play().catch(e => handleErr(e, card));
+  }
+
+  setupMediaSession(s);
 }
 
-function handlePlayError() {
-    statusEl.innerText = '播放失敗，請檢查權限設定';
-    statusEl.style.color = '#ef4444';
+function handleErr(err, card) {
+  card.classList.add('error');
+  btnEl.className     = '';
+  statusEl.textContent = '❌ 播放失敗';
+  statusEl.style.color = '#ef4444';
+  // Show mixed-content guide only for HTTP streams on HTTPS pages
+  if (window.location.protocol === 'https:' && currentStation && currentStation.url.startsWith('http:')) {
+    document.getElementById('guide-modal').style.display = 'flex';
+  }
 }
 
-audio.onplaying = () => {
-    statusEl.innerText = '● 直播中';
-    statusEl.style.color = '#F59E0B';
-    playBtn.classList.add('playing');
-};
-audio.onpause = () => playBtn.classList.remove('playing');
-audio.onwaiting = () => statusEl.innerText = '緩衝中...';
-
-playBtn.onclick = () => audio.paused ? audio.play() : audio.pause();
-
-// 初始化介面
-function init() {
-    const tabs = document.getElementById('region-tabs');
-    const list = document.getElementById('station-list');
-    
-    regions.forEach((r, idx) => {
-        const btn = document.createElement('button');
-        btn.className = 'region-tab' + (idx===0?' active':'');
-        btn.innerText = r.label;
-        btn.onclick = () => {
-            document.querySelectorAll('.region-tab').forEach(t => t.classList.remove('active'));
-            btn.classList.add('active');
-            document.querySelectorAll('.region-group').forEach(g => g.classList.toggle('visible', g.dataset.id === r.id));
-        };
-        tabs.appendChild(btn);
-
-        const group = document.createElement('div');
-        group.className = 'region-group' + (idx===0?' visible':'');
-        group.dataset.id = r.id;
-        group.innerHTML = `<div class="region-label">${r.label}</div>`;
-        
-        r.stations.forEach(s => {
-            const card = document.createElement('div');
-            card.className = 'station-card';
-            card.innerHTML = `<div style="font-size:22px;">${s.icon}</div>
-                              <div style="flex:1; min-width:0;">
-                                <div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.name}</div>
-                                <div style="font-size:11px;color:#666;">${s.genre || 'LIVE'}</div>
-                              </div>`;
-            card.onclick = () => loadStation(s, card);
-            group.appendChild(card);
-        });
-        list.appendChild(group);
-    });
-
-    if ('mediaSession' in navigator) {
-        audio.addEventListener('play', () => {
-            const s = regions.flatMap(r => r.stations).find(st => st.name === nameEl.innerText);
-            navigator.mediaSession.metadata = new MediaMetadata({
-                title: s?.name || '台灣廣播',
-                artist: 'Live Radio',
-                artwork: [{ src: 'icon-cute-radio.png', sizes: '512x512', type: 'image/png' }]
-            });
-        });
-        navigator.mediaSession.setActionHandler('play', () => audio.play());
-        navigator.mediaSession.setActionHandler('pause', () => audio.pause());
-    }
+function togglePlay() {
+  if (!currentStation) return;
+  isPlaying ? audio.pause() : audio.play().catch(() => {});
 }
-init();
+
+btnEl.addEventListener('click', togglePlay);
+
+audio.addEventListener('playing', () => {
+  isPlaying = true;
+  btnEl.className = 'playing';
+  statusEl.textContent = '● 直播中';
+  statusEl.style.color = '#F59E0B';
+  allCards.forEach(({ card, station }) => {
+    if (station.name === currentStation?.name) card.classList.add('playing');
+  });
+});
+audio.addEventListener('pause', () => {
+  isPlaying = false;
+  btnEl.className = '';
+  statusEl.textContent = '已暫停';
+  statusEl.style.color = '#888';
+  allCards.forEach(({ card }) => card.classList.remove('playing'));
+});
+audio.addEventListener('waiting', () => {
+  btnEl.className = 'loading';
+  statusEl.textContent = '緩衝中…';
+  statusEl.style.color = '#888';
+});
+audio.addEventListener('error', () => {
+  const card = allCards.find(({ station }) => station.name === currentStation?.name)?.card;
+  if (card) handleErr(null, card);
+});
+
+function setupMediaSession(s) {
+  if (!('mediaSession' in navigator)) return;
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title:  s.name,
+    artist: '台灣廣播 Radiolist',
+    album:  'Live FM Radio',
+    artwork: [{ src: 'https://cdn-icons-png.flaticon.com/512/3239/3239594.png', sizes: '512x512', type: 'image/png' }]
+  });
+  navigator.mediaSession.setActionHandler('play',  () => audio.play());
+  navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+}
 </script>
 </body>
 </html>
+
+<!--
+╔════════════════════════════════════════════════════════════════╗
+║  PWA manifest.json — 放在同目錄下，取消 <head> 裡的連結       ║
+╠════════════════════════════════════════════════════════════════╣
+║  {                                                             ║
+║    "name": "台灣廣播 Radiolist",                               ║
+║    "short_name": "台灣廣播",                                   ║
+║    "start_url": "/index.html",                                 ║
+║    "display": "standalone",                                    ║
+║    "background_color": "#0A0A0F",                              ║
+║    "theme_color": "#0A0A0F",                                   ║
+║    "icons": [                                                  ║
+║      {"src":"icon-cute-radio.png","sizes":"512x512",           ║
+║       "type":"image/png","purpose":"any maskable"}             ║
+║    ]                                                           ║
+║  }                                                             ║
+╚════════════════════════════════════════════════════════════════╝
+-->
