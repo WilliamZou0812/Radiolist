@@ -7,178 +7,345 @@
 
   <link rel="icon" type="image/png" href="icon-cute-radio.png" />
   <link rel="apple-touch-icon" href="icon-cute-radio.png" />
-  <!-- <link rel="manifest" href="manifest.json" /> -->
+  <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0A0A0F" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="台灣廣播" />
 
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Space+Mono&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
   <style>
+    /* ── Variables ─────────────────────────────────── */
     :root {
-      --bg-base:      #0A0A0F;
-      --bg-surface:   #12121A;
-      --bg-card:      rgba(255,255,255,0.04);
-      --amber:        #F59E0B;
-      --amber-dim:    rgba(245,158,11,0.15);
-      --amber-glow:   rgba(245,158,11,0.3);
-      --text-primary: #F0EDE6;
-      --text-muted:   #5A5754;
-      --player-h:     110px;
-      --safe-bottom:  env(safe-area-inset-bottom, 0px);
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: var(--bg-base); color: var(--text-primary);
-      font-family: 'Noto Sans TC', sans-serif; overflow-x: hidden;
-    }
-    body::before {
-      content: ''; position: fixed; inset: 0; pointer-events: none;
-      background: radial-gradient(ellipse 70% 50% at 50% -10%, rgba(245,158,11,0.09) 0%, transparent 60%);
-      z-index: 0;
+      --bg-base:       #0A0A0F;
+      --bg-surface:    #12121A;
+      --bg-card:       rgba(255,255,255,0.04);
+      --bg-card-hover: rgba(255,255,255,0.07);
+      --border:        rgba(255,255,255,0.07);
+      --amber:         #F59E0B;
+      --amber-dim:     rgba(245,158,11,0.14);
+      --amber-glow:    rgba(245,158,11,0.3);
+      --red:           #EF4444;
+      --text-primary:  #F0EDE6;
+      --text-muted:    #5A5754;
+      --text-sub:      #9D9A94;
+      --player-h:      118px; /* main row + volume row */
+      --safe-bottom:   env(safe-area-inset-bottom, 0px);
+      --safe-top:      env(safe-area-inset-top, 0px);
     }
 
-    /* ── Layout ─────────── */
+    /* ── Reset ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: 'Noto Sans TC', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      overscroll-behavior: none;
+    }
+    button { font-family: inherit; }
+
+    /* Ambient glow */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 70% 40% at 50% -5%, rgba(245,158,11,.09) 0%, transparent 60%),
+        radial-gradient(ellipse 35% 25% at 85% 105%, rgba(139,92,246,.06) 0%, transparent 55%);
+    }
+
+    /* ── App Shell ─────────────────────────────────── */
     #app {
       position: relative; z-index: 1; min-height: 100dvh;
-      padding-bottom: calc(var(--player-h) + var(--safe-bottom) + 20px);
+      padding-bottom: calc(var(--player-h) + var(--safe-bottom) + 16px);
     }
-    header { padding: 52px 24px 12px; }
-    header .sub { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: .18em; color: var(--amber); text-transform: uppercase; margin-bottom: 4px; }
-    h1 { font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
 
-    /* ── Region tabs ────── */
-    .region-scroll-wrap { overflow-x: auto; padding: 14px 16px; display: flex; gap: 10px; scrollbar-width: none; }
-    .region-scroll-wrap::-webkit-scrollbar { display: none; }
+    /* ── Header ────────────────────────────────────── */
+    header { padding: calc(var(--safe-top) + 48px) 20px 12px; }
+    .header-sup {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px; letter-spacing: .18em; color: var(--amber);
+      text-transform: uppercase; margin-bottom: 4px;
+    }
+    h1 { font-size: 24px; font-weight: 700; letter-spacing: -.02em; }
+
+    /* ── Search bar ────────────────────────────────── */
+    .search-wrap {
+      padding: 12px 20px 4px;
+      position: relative;
+    }
+    .search-wrap svg {
+      position: absolute; left: 34px; top: 50%; transform: translateY(-50%);
+      width: 16px; height: 16px; color: var(--text-muted); pointer-events: none;
+    }
+    #search-input {
+      width: 100%; padding: 10px 14px 10px 38px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--border);
+      border-radius: 12px; color: var(--text-primary);
+      font-size: 14px; font-family: 'Noto Sans TC', sans-serif;
+      outline: none; transition: border-color .2s, background .2s;
+    }
+    #search-input::placeholder { color: var(--text-muted); }
+    #search-input:focus {
+      border-color: rgba(245,158,11,.4);
+      background: rgba(255,255,255,.07);
+    }
+    #search-clear {
+      position: absolute; right: 28px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--text-muted);
+      font-size: 18px; cursor: pointer; padding: 4px 8px; display: none;
+      line-height: 1;
+    }
+    #search-no-result {
+      display: none; text-align: center; padding: 40px 20px;
+      color: var(--text-muted); font-size: 14px;
+    }
+
+    /* ── Region tabs ───────────────────────────────── */
+    .tabs-wrap {
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; padding: 12px 20px 14px;
+      display: flex; gap: 8px;
+    }
+    .tabs-wrap::-webkit-scrollbar { display: none; }
     .region-tab {
-      flex-shrink: 0; padding: 8px 16px; border-radius: 20px;
-      border: 1px solid rgba(255,255,255,0.1); background: var(--bg-card);
-      color: #9D9A94; font-size: 13px; font-family: 'Noto Sans TC', sans-serif;
-      cursor: pointer; white-space: nowrap;
-      transition: background .15s, border-color .15s, color .15s;
+      flex-shrink: 0; padding: 7px 14px; border-radius: 999px;
+      border: 1px solid var(--border); background: var(--bg-card);
+      color: var(--text-sub); font-size: 13px; cursor: pointer;
+      white-space: nowrap; transition: background .15s, border-color .15s, color .15s;
       -webkit-tap-highlight-color: transparent;
     }
-    .region-tab.active { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
+    .region-tab.active { background: var(--amber-dim); border-color: rgba(245,158,11,.45); color: var(--amber); }
 
-    /* ── Station groups ─── */
+    /* ── Station list ──────────────────────────────── */
+    #station-list { display: flex; flex-direction: column; gap: 6px; padding: 0 14px; }
     .region-group { display: none; }
     .region-group.visible { display: block; }
     .region-label {
-      font-size: 10px; color: var(--text-muted); padding: 12px 24px 10px;
+      font-size: 10px; color: var(--text-muted); padding: 10px 10px 8px;
       text-transform: uppercase; font-family: 'Space Mono', monospace; letter-spacing: .1em;
     }
-    #station-list { display: flex; flex-direction: column; gap: 8px; padding: 0 16px 8px; }
+    .empty-hint {
+      text-align: center; padding: 28px 20px;
+      color: var(--text-muted); font-size: 13px; line-height: 1.6;
+    }
 
-    /* ── Station card ───── */
+    /* ── Station card ──────────────────────────────── */
     .station-card {
-      display: flex; align-items: center; gap: 14px; padding: 13px 14px;
-      background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 14px; cursor: pointer; min-height: 68px;
-      transition: background .18s, border-color .18s, transform .1s;
-      -webkit-tap-highlight-color: transparent; position: relative; overflow: hidden;
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 12px; background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 14px;
+      cursor: pointer; min-height: 64px; position: relative;
+      overflow: hidden; transition: background .18s, border-color .18s, transform .1s;
+      -webkit-tap-highlight-color: transparent;
     }
-    .station-card:active { transform: scale(.98); }
-    .station-card:hover, .station-card:focus-visible {
-      background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.14); outline: none;
-    }
+    .station-card:active { transform: scale(.985); }
+    .station-card:hover { background: var(--bg-card-hover); border-color: rgba(255,255,255,.12); }
+    .station-card:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
     .station-card.active {
-      background: var(--amber-dim); border-color: rgba(245,158,11,.45);
+      background: var(--amber-dim); border-color: rgba(245,158,11,.42);
     }
     .station-card.active::before {
       content: ''; position: absolute; left: 0; top: 0; bottom: 0;
       width: 3px; background: var(--amber); border-radius: 0 2px 2px 0;
     }
-    .station-card.error { border-color: rgba(239,68,68,.5); }
+    .station-card.error { border-color: rgba(239,68,68,.4); }
 
+    /* icon + health dot */
     .s-icon {
-      width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0;
-      background: rgba(255,255,255,0.06); display: flex; align-items: center;
-      justify-content: center; font-size: 20px; transition: background .2s;
+      width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0;
+      background: rgba(255,255,255,.06); display: flex; align-items: center;
+      justify-content: center; font-size: 19px; position: relative;
+      transition: background .2s;
     }
-    .station-card.active .s-icon { background: var(--amber-dim); }
+    .station-card.active .s-icon { background: rgba(245,158,11,.18); }
+    .health-dot {
+      position: absolute; bottom: 1px; right: 1px;
+      width: 8px; height: 8px; border-radius: 50%;
+      border: 1.5px solid var(--bg-base);
+      background: #3A3A3A; /* default: unknown */
+      transition: background .4s;
+    }
+    .health-dot.ok     { background: #22C55E; }
+    .health-dot.error  { background: #EF4444; }
+    .health-dot.http   { background: #EAB308; }
+    .health-dot.loading { background: #3A3A3A; animation: pulse-dot 1s ease-in-out infinite; }
+    @keyframes pulse-dot { 0%,100%{opacity:.4} 50%{opacity:1} }
+
+    /* info */
     .s-info { flex: 1; min-width: 0; }
     .s-name {
-      font-size: 14px; font-weight: 500; white-space: nowrap;
-      overflow: hidden; text-overflow: ellipsis; color: var(--text-primary);
+      font-size: 14px; font-weight: 500; color: var(--text-primary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .s-meta {
-      font-size: 11px; color: var(--text-muted); margin-top: 2px;
-      font-family: 'Space Mono', monospace; text-transform: uppercase; letter-spacing: .05em;
+      font-size: 10px; color: var(--text-muted); margin-top: 2px;
+      font-family: 'Space Mono', monospace; text-transform: uppercase; letter-spacing: .04em;
     }
     .station-card.active .s-name { color: var(--amber); }
 
-    /* Equalizer animation */
-    .eq-bars { display: none; align-items: flex-end; gap: 2px; height: 16px; flex-shrink: 0; }
+    /* equalizer */
+    .eq-bars { display: none; align-items: flex-end; gap: 2px; height: 15px; flex-shrink: 0; }
     .station-card.active.playing .eq-bars { display: flex; }
-    .eq-bar { width: 3px; background: var(--amber); border-radius: 2px; animation: eq .9s ease-in-out infinite alternate; }
+    .eq-bar { width: 3px; border-radius: 2px; background: var(--amber); animation: eq .9s ease-in-out infinite alternate; }
     .eq-bar:nth-child(1){animation-duration:.7s}
     .eq-bar:nth-child(2){animation-duration:.5s;animation-delay:.1s}
     .eq-bar:nth-child(3){animation-duration:.6s;animation-delay:.05s}
     .eq-bar:nth-child(4){animation-duration:.8s;animation-delay:.15s}
-    @keyframes eq { from{height:4px;opacity:.5} to{height:16px;opacity:1} }
+    @keyframes eq { from{height:3px;opacity:.5} to{height:15px;opacity:1} }
 
-    /* ── Player ─────────── */
+    /* favorite button */
+    .fav-btn {
+      width: 38px; height: 38px; flex-shrink: 0; border: none;
+      background: none; color: var(--text-muted); font-size: 18px;
+      cursor: pointer; border-radius: 8px; display: flex;
+      align-items: center; justify-content: center;
+      transition: color .2s, transform .15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .fav-btn:active { transform: scale(.85); }
+    .fav-btn.on { color: var(--amber); }
+
+    /* ── Bottom Player ─────────────────────────────── */
     #player {
       position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
-      padding: 14px 16px calc(14px + var(--safe-bottom));
-      background: rgba(10,10,20,.92);
-      backdrop-filter: blur(20px) saturate(150%);
-      -webkit-backdrop-filter: blur(20px) saturate(150%);
+      background: rgba(8, 8, 15, .92);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
       border-top: 1px solid rgba(255,255,255,.1);
+      padding-bottom: var(--safe-bottom);
     }
+    /* amber accent bar */
     #player::before {
       content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, var(--amber), rgba(245,158,11,.15));
-      opacity: 0; transition: opacity .3s;
+      background: linear-gradient(90deg, var(--amber), rgba(245,158,11,.1));
+      opacity: 0; transition: opacity .35s;
     }
     #player.active::before { opacity: 1; }
-    .player-inner { display: flex; align-items: center; gap: 15px; max-width: 600px; margin: 0 auto; }
+
+    /* main row */
+    .player-main {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px 6px; max-width: 600px; margin: 0 auto;
+    }
     .p-art {
-      width: 48px; height: 48px; border-radius: 10px; flex-shrink: 0;
-      background: var(--bg-surface); border: 1px solid rgba(255,255,255,.08);
-      display: flex; align-items: center; justify-content: center; font-size: 24px;
-      transition: border-color .3s;
+      width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0;
+      background: var(--bg-surface); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; transition: border-color .3s;
     }
     #player.active .p-art { border-color: rgba(245,158,11,.4); }
     .p-meta { flex: 1; min-width: 0; }
-    #p-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    #p-status { font-size: 11px; color: #888; font-family: 'Space Mono', monospace; margin-top: 2px; }
-    #play-btn {
-      width: 52px; height: 52px; border-radius: 50%;
-      background: var(--amber); border: none;
+    #p-name {
+      font-size: 14px; font-weight: 500;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    #p-status {
+      font-size: 10px; color: var(--text-muted);
+      font-family: 'Space Mono', monospace; margin-top: 2px;
+      transition: color .3s;
+    }
+    #player.active #p-status { color: var(--amber); }
+
+    /* sleep timer button */
+    #sleep-btn {
+      width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+      background: rgba(255,255,255,.05); border: 1px solid var(--border);
+      color: var(--text-muted); font-size: 13px; cursor: pointer;
+      font-family: 'Space Mono', monospace; letter-spacing: -.02em;
       display: flex; align-items: center; justify-content: center;
-      cursor: pointer; flex-shrink: 0;
+      transition: background .2s, border-color .2s, color .2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #sleep-btn.active {
+      background: rgba(245,158,11,.15); border-color: rgba(245,158,11,.4);
+      color: var(--amber);
+    }
+
+    /* play/pause button */
+    #play-btn {
+      width: 50px; height: 50px; border-radius: 50%; flex-shrink: 0;
+      background: var(--amber); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
       box-shadow: 0 0 20px var(--amber-glow);
       transition: transform .12s, box-shadow .2s, background .2s;
       -webkit-tap-highlight-color: transparent;
     }
-    #play-btn:active { transform: scale(.93); box-shadow: 0 0 10px var(--amber-glow); }
-    #play-btn:disabled { background: #3A3A40; box-shadow: none; cursor: default; }
-    .icon-play { width: 0; height: 0; border-style: solid; border-width: 9px 0 9px 15px; border-color: transparent transparent transparent #0A0A0F; margin-left: 3px; }
-    .icon-pause { display: none; gap: 5px; }
-    .icon-pause span { display: block; width: 4px; height: 16px; background: #0A0A0F; border-radius: 2px; }
-    .icon-spin { display: none; width: 22px; height: 22px; border: 3px solid rgba(10,10,15,.3); border-top-color: #0A0A0F; border-radius: 50%; animation: spin .7s linear infinite; }
-    @keyframes spin{to{transform:rotate(360deg)}}
-    #play-btn.loading .icon-play { display: none; }
+    #play-btn:active { transform: scale(.9); box-shadow: 0 0 8px var(--amber-glow); }
+    #play-btn:disabled { background: #2A2A30; box-shadow: none; cursor: default; }
+    .icon-play {
+      width: 0; height: 0; border-style: solid;
+      border-width: 8px 0 8px 14px;
+      border-color: transparent transparent transparent #0A0A0F;
+      margin-left: 3px;
+    }
+    .icon-pause { display: none; gap: 4px; }
+    .icon-pause span { display: block; width: 4px; height: 15px; background: #0A0A0F; border-radius: 2px; }
+    .icon-spin {
+      display: none; width: 20px; height: 20px;
+      border: 3px solid rgba(10,10,15,.25); border-top-color: #0A0A0F;
+      border-radius: 50%; animation: spin .65s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #play-btn.loading .icon-play  { display: none; }
     #play-btn.loading .icon-pause { display: none; }
-    #play-btn.loading .icon-spin { display: block; }
-    #play-btn.playing .icon-play { display: none; }
+    #play-btn.loading .icon-spin  { display: block; }
+    #play-btn.playing .icon-play  { display: none; }
     #play-btn.playing .icon-pause { display: flex; }
 
-    /* ── Mixed-content modal ─ */
+    /* volume row */
+    .player-vol {
+      display: flex; align-items: center; gap: 8px;
+      padding: 0 16px 10px; max-width: 600px; margin: 0 auto;
+    }
+    .vol-icon { font-size: 13px; color: var(--text-muted); flex-shrink: 0; user-select: none; }
+    #vol-slider {
+      flex: 1; height: 3px; -webkit-appearance: none; appearance: none;
+      background: rgba(255,255,255,.12); border-radius: 3px; outline: none;
+      cursor: pointer;
+    }
+    #vol-slider::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 16px; height: 16px;
+      border-radius: 50%; background: var(--amber); cursor: pointer;
+      box-shadow: 0 0 6px rgba(245,158,11,.5);
+    }
+    #vol-slider::-moz-range-thumb {
+      width: 16px; height: 16px; border-radius: 50%; background: var(--amber);
+      border: none; cursor: pointer;
+    }
+    .vol-pct {
+      font-size: 10px; font-family: 'Space Mono', monospace;
+      color: var(--text-muted); width: 30px; text-align: right; flex-shrink: 0;
+    }
+
+    /* ── Guide Modal (HTTP mixed content) ──────────── */
     #guide-modal {
       display: none; position: fixed; inset: 0; z-index: 999;
-      background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+      background: rgba(0,0,0,.85); backdrop-filter: blur(12px);
       align-items: center; justify-content: center; padding: 24px;
     }
     .modal-box {
-      background: #1A1A22; padding: 24px; border-radius: 20px;
+      background: #16161F; padding: 24px; border-radius: 20px;
       max-width: 380px; width: 100%; border: 1px solid rgba(245,158,11,.4);
     }
-    .modal-box h3 { color: var(--amber); margin-bottom: 10px; font-size: 16px; }
-    .step-box { background: rgba(255,255,255,0.05); padding: 12px; margin: 14px 0; border-radius: 10px; font-size: 13px; line-height: 1.65; color: #ccc; }
-    .btn-reload { background: var(--amber); border: none; padding: 12px; width: 100%; border-radius: 10px; font-weight: 700; cursor: pointer; color: #000; font-size: 14px; }
+    .modal-box h3 { color: var(--amber); margin-bottom: 10px; font-size: 15px; }
+    .modal-box p  { font-size: 13px; color: var(--text-sub); margin-bottom: 12px; line-height: 1.55; }
+    .step-box {
+      background: rgba(255,255,255,.04); padding: 12px;
+      border-radius: 10px; font-size: 12px; line-height: 1.7; color: #ccc; margin-bottom: 14px;
+    }
+    .btn-modal {
+      background: var(--amber); border: none; padding: 12px; width: 100%;
+      border-radius: 10px; font-weight: 700; cursor: pointer;
+      color: #000; font-size: 14px; font-family: 'Noto Sans TC', sans-serif;
+    }
+
+    /* hidden */
     #audio { display: none; }
   </style>
 </head>
@@ -186,213 +353,449 @@
 
 <div id="app">
   <header>
-    <div class="sub">🇹🇼 Live Radio</div>
+    <div class="header-sup">🇹🇼 Live Radio</div>
     <h1>台灣廣播 Radiolist</h1>
   </header>
-  <div class="region-scroll-wrap" id="region-tabs"></div>
+
+  <!-- Search -->
+  <div class="search-wrap">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+    <input id="search-input" type="search" placeholder="搜尋電台名稱..." autocomplete="off" />
+    <button id="search-clear" aria-label="清除搜尋">×</button>
+  </div>
+
+  <!-- Region tabs -->
+  <div class="tabs-wrap" id="region-tabs"></div>
+
+  <!-- Station list -->
   <div id="station-list"></div>
+  <div id="search-no-result">🔍 找不到符合的電台</div>
 </div>
 
 <!-- Player -->
 <div id="player">
-  <div class="player-inner">
+  <div class="player-main">
     <div class="p-art" id="p-art">📻</div>
     <div class="p-meta">
       <div id="p-name">請選擇電台</div>
       <div id="p-status">尚未播放</div>
     </div>
-    <button id="play-btn" disabled aria-label="播放/暫停">
+    <button id="sleep-btn" title="睡眠定時器（循環：15→30→60→90分→關閉）">⏱</button>
+    <button id="play-btn" disabled aria-label="播放 / 暫停">
       <div class="icon-play"></div>
       <div class="icon-pause"><span></span><span></span></div>
       <div class="icon-spin"></div>
     </button>
   </div>
+  <div class="player-vol">
+    <span class="vol-icon">🔈</span>
+    <input id="vol-slider" type="range" min="0" max="1" step="0.01" value="1" aria-label="音量" />
+    <span class="vol-pct" id="vol-pct">100%</span>
+  </div>
 </div>
 
-<!-- Mixed-content guide modal -->
+<!-- HTTP Guide Modal -->
 <div id="guide-modal">
   <div class="modal-box">
     <h3>⚠️ 瀏覽器阻擋不安全連線</h3>
-    <p style="font-size:13px;color:#aaa;">此電台使用 HTTP 串流，需手動允許：</p>
+    <p>此電台使用舊式 HTTP 串流。需手動允許混合內容才能播放：</p>
     <div class="step-box">
-      <strong>💻 電腦 Chrome / Edge</strong><br>
-      點網址列左側「鎖頭」→「網站設定」<br>→ 找「不安全內容」→ 設為「允許」<br><br>
+      <strong>💻 Chrome / Edge（電腦）</strong><br>
+      點網址列左側「🔒」→「網站設定」→「不安全內容」→「允許」<br><br>
       <strong>📱 Android Chrome</strong><br>
-      點右上角「⋮」→「網站設定」→ 允許不安全內容<br><br>
-      <strong>📱 iOS Safari</strong><br>
-      設定 → Safari → 進階 → 允許不安全網站
+      點右上角「⋮」→「網站設定」→「不安全內容」→「允許」<br><br>
+      <strong>💡 最佳方案</strong><br>
+      部署 <code>cloudflare-proxy.js</code>（附件），<br>可讓所有電台免設定直接播放。
     </div>
-    <button class="btn-reload" onclick="document.getElementById('guide-modal').style.display='none'; location.reload()">✓ 已設定，重新整理</button>
+    <button class="btn-modal" id="guide-reload">✓ 已設定，重新整理</button>
+    <button class="btn-modal" style="margin-top:8px;background:rgba(255,255,255,.08);color:#ccc;" id="guide-close">先關閉</button>
   </div>
 </div>
 
 <audio id="audio" crossorigin="anonymous"></audio>
 
 <script>
-// ══════════════════════════════════════════════════════════════
-//  台灣廣播電台資料庫 — 僅限 FM 電台
-//  串流來源：tingfm.com / radiotaiwan.tw 2024-2025 年交叉驗證
-//
-//  ★ rcs.revma.com 串流從伺服器端測試會返回 403（IP 限制），
-//    但在瀏覽器端（帶正確 Origin/Referer header）均可正常播放。
-//
-//  ★ 標註 [HTTP] 的電台在 HTTPS 頁面需允許 mixed content。
-// ══════════════════════════════════════════════════════════════
-const regions = [
+'use strict';
+
+// ══════════════════════════════════════════════════════════════════
+//  資料庫 — 僅限 FM 電台，串流來源交叉驗證自 tingfm.com (2024-2025)
+// ══════════════════════════════════════════════════════════════════
+const REGIONS = [
   {
     id: 'national', label: '全國 / 聯播',
     stations: [
-      // ── 中廣家族 ──────────────────────────────────────────────
-      { name: '中廣流行網 I like Radio FM103', url: 'https://stream.rcs.revma.com/aw9uqyxy2tzuv',        icon: '🎵', genre: 'POP'  },
-      // 注意：中廣音樂網 i Radio FM96.3 已轉型為新聞/談話節目
-      { name: '中廣音樂網 i Radio FM96.3',    url: 'https://stream.rcs.revma.com/ndk05tyy2tzuv',        icon: '🎶', genre: 'NEWS' },
-      // ── 全國聯播 ──────────────────────────────────────────────
-      { name: '九八新聞台 News98 FM98.1',     url: 'https://stream.rcs.revma.com/pntx1639ntzuv.m4a',   icon: '📰', genre: 'NEWS' },
-      { name: '飛碟電台 UFO FM92.1',          url: 'https://stream.rcs.revma.com/em90w4aeewzuv',        icon: '🛸', genre: 'POP'  },
-      { name: 'ICRT FM100.7',                 url: 'https://stream.rcs.revma.com/nkdfurztxp3vv',        icon: '🌐', genre: 'ENG'  },
-      { name: '全國廣播 MRadio FM106',         url: 'https://stream.rcs.revma.com/044q61ha7a0uv',        icon: '🎙️', genre: 'TALK' },
+      { name: '中廣流行網 I like Radio FM103', url: 'https://stream.rcs.revma.com/aw9uqyxy2tzuv',           icon: '🎵', genre: 'POP'     },
+      { name: '中廣音樂網 i Radio FM96.3',    url: 'https://stream.rcs.revma.com/ndk05tyy2tzuv',           icon: '🎶', genre: 'NEWS'    },
+      { name: '九八新聞台 News98 FM98.1',     url: 'https://stream.rcs.revma.com/pntx1639ntzuv.m4a',      icon: '📰', genre: 'NEWS'    },
+      { name: '飛碟電台 UFO FM92.1',          url: 'https://stream.rcs.revma.com/em90w4aeewzuv',           icon: '🛸', genre: 'POP'     },
+      { name: 'ICRT FM100.7',                 url: 'https://stream.rcs.revma.com/nkdfurztxp3vv',           icon: '🌐', genre: 'ENG'     },
+      { name: '全國廣播 MRadio FM106',         url: 'https://stream.rcs.revma.com/044q61ha7a0uv',           icon: '🎙️', genre: 'TALK'    },
       { name: '警廣全國交通網 FM104.9',        url: 'https://stream.pbs.gov.tw/live/mp3:PBS/playlist.m3u8', icon: '🚦', genre: 'TRAFFIC' },
     ]
   },
   {
-    id: 'taipei', label: '大台北地區',
+    id: 'taipei', label: '大台北',
     stations: [
-      { name: '好事聯播網 FM98.9 北部',        url: 'https://stream.rcs.revma.com/fkdywbc59duvv',        icon: '😊', genre: 'POP'   },
-      { name: '環宇廣播電台 FM96.7',           url: 'https://stream.rcs.revma.com/srn5f9kmwxhvv',        icon: '🌏', genre: 'NEWS'  },
-      { name: 'Hit FM 北部 FM107.7',           url: 'http://202.39.43.67:1935/live/RA000036/chunklist.m3u8', icon: '🔥', genre: 'HIT [HTTP]' },
-      { name: '台北廣播電台 FM93.1',           url: 'https://stream.ginnet.cloud/live0130lo-yfyo/_definst_/fm/playlist.m3u8', icon: '🗼', genre: 'LOCAL' },
-      { name: '亞洲電台 FM92.7',               url: 'https://stream.rcs.revma.com/xpgtqc74hv8uv',        icon: '🌏', genre: 'POP'   },
-      { name: '亞太電台 FM92.3',               url: 'https://stream.rcs.revma.com/kydend74hv8uv',        icon: '🌏', genre: 'POP'   },
-      { name: '飛揚調頻 FM89.5',               url: 'https://stream.rcs.revma.com/e0tdah74hv8uv',        icon: '✈️', genre: 'POP'   },
-      { name: '城市廣播 台北健康 FM90.1',       url: 'http://fm901.cityfm.tw:8080/901.mp3',               icon: '🏙️', genre: 'LOCAL [HTTP]' },
-      { name: '大樹下廣播電台 FM90.5',          url: 'http://60.250.148.112:8000/live',                   icon: '🌳', genre: 'LOCAL [HTTP]' },
-      { name: '輔大之聲 FM88.5',               url: 'http://140.136.115.115:8000/fjuvoice885.mp3',       icon: '🎓', genre: 'UNI [HTTP]'   },
-      { name: '政大之聲 FM88.7',               url: 'http://140.119.169.241:8000/ade.taiwan.mp3',        icon: '🎓', genre: 'UNI [HTTP]'   },
+      { name: '好事聯播網 Best FM98.9 北部',  url: 'https://stream.rcs.revma.com/fkdywbc59duvv',           icon: '😊', genre: 'POP'   },
+      { name: '環宇廣播電台 FM96.7',          url: 'https://stream.rcs.revma.com/srn5f9kmwxhvv',           icon: '🌏', genre: 'NEWS'  },
+      { name: '台北廣播電台 FM93.1',          url: 'https://stream.ginnet.cloud/live0130lo-yfyo/_definst_/fm/playlist.m3u8', icon: '🗼', genre: 'LOCAL' },
+      { name: '亞洲電台 FM92.7',              url: 'https://stream.rcs.revma.com/xpgtqc74hv8uv',           icon: '🌟', genre: 'POP'   },
+      { name: '亞太電台 FM92.3',              url: 'https://stream.rcs.revma.com/kydend74hv8uv',           icon: '🌟', genre: 'POP'   },
+      { name: '飛揚調頻 FM89.5',              url: 'https://stream.rcs.revma.com/e0tdah74hv8uv',           icon: '✈️', genre: 'POP'   },
+      { name: 'Hit FM 北部 FM107.7',          url: 'http://202.39.43.67:1935/live/RA000036/chunklist.m3u8', icon: '🔥', genre: 'HIT'   },
+      { name: '城市廣播 台北健康 FM90.1',     url: 'http://fm901.cityfm.tw:8080/901.mp3',                  icon: '🏙️', genre: 'LOCAL' },
+      { name: '大樹下廣播電台 FM90.5',        url: 'http://60.250.148.112:8000/live',                      icon: '🌳', genre: 'LOCAL' },
+      { name: '輔大之聲 FM88.5',              url: 'http://140.136.115.115:8000/fjuvoice885.mp3',          icon: '🎓', genre: 'UNI'   },
+      { name: '政大之聲 FM88.7',              url: 'http://140.119.169.241:8000/ade.taiwan.mp3',           icon: '🎓', genre: 'UNI'   },
     ]
   },
   {
     id: 'hsinchu', label: '桃竹苗',
     stations: [
-      { name: 'IC之音竹科廣播 FM97.5',         url: 'https://stream.rcs.revma.com/7mnq8rt7k5zuv',        icon: '💡', genre: 'TALK' },
-      { name: '微微笑 風城廣播 FM98.7 新竹',   url: 'http://61.220.245.236:8080/',                       icon: '💨', genre: 'LOCAL [HTTP]' },
-      { name: '微微笑 竹塹廣播 FM90.3 新竹',   url: 'http://211.72.230.118:8081/',                       icon: '🏛️', genre: 'LOCAL [HTTP]' },
-      { name: '苗栗正義電台 FM88.9',            url: 'http://211.20.119.103:8081/',                       icon: '⚖️', genre: 'LOCAL [HTTP]' },
-      { name: '微微笑 桃園國際廣播 FM101.1',   url: 'http://211.72.65.61:8080/',                         icon: '✈️', genre: 'LOCAL [HTTP]' },
+      { name: 'IC之音竹科廣播 FM97.5',        url: 'https://stream.rcs.revma.com/7mnq8rt7k5zuv',           icon: '💡', genre: 'TALK'  },
+      { name: '微微笑 桃園國際廣播 FM101.1',  url: 'http://211.72.65.61:8080/',                            icon: '✈️', genre: 'LOCAL' },
+      { name: '微微笑 風城廣播 FM98.7 新竹',  url: 'http://61.220.245.236:8080/',                          icon: '💨', genre: 'LOCAL' },
+      { name: '微微笑 竹塹廣播 FM90.3 新竹',  url: 'http://211.72.230.118:8081/',                          icon: '🏛️', genre: 'LOCAL' },
+      { name: '苗栗正義電台 FM88.9',           url: 'http://211.20.119.103:8081/',                          icon: '⚖️', genre: 'LOCAL' },
     ]
   },
   {
     id: 'taichung', label: '台中 / 彰化 / 南投',
     stations: [
-      { name: '好事聯播網 Best FM90.3 台中',   url: 'https://stream.rcs.revma.com/zr7xzec59duvv',        icon: '😊', genre: 'POP'   },
-      { name: '城市廣播網 台中 FM92.9',        url: 'http://fm929.cityfm.tw:8080/929.mp3',               icon: '🏙️', genre: 'POP [HTTP]'  },
-      { name: '台中廣播 FM100.7',              url: 'https://stream.ginnet.cloud/live0110lo-3zxm/_definst_/lucky7/playlist.m3u8', icon: '📻', genre: 'LOCAL' },
-      { name: '太陽廣播電台 FM89.1',           url: 'https://stream.ginnet.cloud/live0112lo-f9xk/_definst_/sun891/playlist.m3u8', icon: '☀️', genre: 'LOCAL' },
-      { name: '美聲廣播 FM91.5',               url: 'http://1.34.23.16:8080/broadwavehigh.mp3',          icon: '🎤', genre: 'MUSIC [HTTP]' },
-      { name: '微微笑 歡喜之聲 FM106.3 台中',  url: 'http://59.125.41.65:8081/',                         icon: '😊', genre: 'LOCAL [HTTP]' },
-      { name: '古典音樂台 Family977 FM97.7',   url: 'http://59.120.88.155:8000/live.mp3',                icon: '🎻', genre: 'CLASS [HTTP]' },
+      { name: '好事聯播網 Best FM90.3 台中',  url: 'https://stream.rcs.revma.com/zr7xzec59duvv',           icon: '😊', genre: 'POP'   },
+      { name: '城市廣播網 台中 FM92.9',       url: 'http://fm929.cityfm.tw:8080/929.mp3',                  icon: '🏙️', genre: 'POP'   },
+      { name: '台中廣播 FM100.7',             url: 'https://stream.ginnet.cloud/live0110lo-3zxm/_definst_/lucky7/playlist.m3u8', icon: '📻', genre: 'LOCAL' },
+      { name: '太陽廣播電台 FM89.1',          url: 'https://stream.ginnet.cloud/live0112lo-f9xk/_definst_/sun891/playlist.m3u8', icon: '☀️', genre: 'LOCAL' },
+      { name: '古典音樂台 Family977 FM97.7',  url: 'http://59.120.88.155:8000/live.mp3',                   icon: '🎻', genre: 'CLASS' },
+      { name: '美聲廣播 FM91.5',              url: 'http://1.34.23.16:8080/broadwavehigh.mp3',             icon: '🎤', genre: 'MUSIC' },
+      { name: '微微笑 歡喜之聲 FM106.3 台中', url: 'http://59.125.41.65:8081/',                            icon: '😊', genre: 'LOCAL' },
     ]
   },
   {
     id: 'tainan', label: '嘉義 / 台南',
     stations: [
-      { name: '城市廣播網 台南知音 FM97.1',    url: 'http://fm971.cityfm.tw:8080/971.mp3',               icon: '🏙️', genre: 'POP [HTTP]'   },
-      { name: '微微笑 凱旋廣播 FM97.9 台南',  url: 'http://59.125.209.209:8081/',                        icon: '🎊', genre: 'LOCAL [HTTP]' },
-      { name: '微微笑 嘉義環球廣播 FM107.1',  url: 'http://60.248.53.115:8081/',                         icon: '🌐', genre: 'LOCAL [HTTP]' },
-      { name: '志明廣播電台 FM93.7 嘉義',     url: 'https://stream.rcs.revma.com/hpeqh9mkc6hvv',         icon: '🎙️', genre: 'LOCAL'        },
+      { name: '城市廣播網 台南知音 FM97.1',   url: 'http://fm971.cityfm.tw:8080/971.mp3',                  icon: '🏙️', genre: 'POP'   },
+      { name: '微微笑 凱旋廣播 FM97.9 台南',  url: 'http://59.125.209.209:8081/',                          icon: '🎊', genre: 'LOCAL' },
+      { name: '微微笑 嘉義環球廣播 FM107.1',  url: 'http://60.248.53.115:8081/',                           icon: '🌐', genre: 'LOCAL' },
+      { name: '志明廣播電台 FM93.7 嘉義',    url: 'https://stream.rcs.revma.com/hpeqh9mkc6hvv',            icon: '🎙️', genre: 'LOCAL' },
     ]
   },
   {
     id: 'kaohsiung', label: '高雄 / 屏東',
     stations: [
-      { name: '好事聯播網 港都 FM98.3 高雄',  url: 'https://stream.rcs.revma.com/q2m07dc59duvv',         icon: '😊', genre: 'POP'          },
-      { name: '下港之聲 FM90.5 高雄',         url: 'http://59.120.255.155:8081/',                        icon: '⚓', genre: 'LOCAL [HTTP]'  },
-      { name: '微微笑 屏東之聲 FM92.5',       url: 'http://59.120.255.169:8081/',                        icon: '🌴', genre: 'LOCAL [HTTP]'  },
-      { name: '微微笑 潮州之聲 FM90.9 屏東',  url: 'http://59.120.255.170:8081/',                        icon: '🏡', genre: 'LOCAL [HTTP]'  },
-      { name: '微微笑 大武山廣播 FM91.3 屏東',url: 'http://59.120.255.171:8081/',                        icon: '⛰️', genre: 'LOCAL [HTTP]'  },
+      { name: '好事聯播網 港都 FM98.3 高雄', url: 'https://stream.rcs.revma.com/q2m07dc59duvv',            icon: '😊', genre: 'POP'   },
+      { name: '下港之聲 FM90.5 高雄',        url: 'http://59.120.255.155:8081/',                           icon: '⚓', genre: 'LOCAL' },
+      { name: '微微笑 屏東之聲 FM92.5',      url: 'http://59.120.255.169:8081/',                           icon: '🌴', genre: 'LOCAL' },
+      { name: '微微笑 潮州之聲 FM90.9 屏東', url: 'http://59.120.255.170:8081/',                           icon: '🏡', genre: 'LOCAL' },
+      { name: '微微笑 大武山廣播 FM91.3 屏東',url:'http://59.120.255.171:8081/',                           icon: '⛰️', genre: 'LOCAL' },
     ]
   },
   {
     id: 'east', label: '宜蘭 / 花蓮 / 台東',
     stations: [
-      { name: '微微笑 噶瑪蘭廣播 FM97.9 宜蘭',url: 'http://61.220.209.152:8081/',                        icon: '🌾', genre: 'LOCAL [HTTP]'  },
-      { name: '花蓮希望之聲 FM90.5',          url: 'http://61.219.59.31:8081/',                          icon: '🌅', genre: 'LOCAL [HTTP]'  },
-      { name: '東華之聲 花蓮大學',             url: 'http://radio.ndhu.edu.tw/radio.mp3',                 icon: '🎓', genre: 'UNI [HTTP]'   },
+      { name: '微微笑 噶瑪蘭廣播 FM97.9 宜蘭',url:'http://61.220.209.152:8081/',                           icon: '🌾', genre: 'LOCAL' },
+      { name: '花蓮希望之聲 FM90.5',          url: 'http://61.219.59.31:8081/',                            icon: '🌅', genre: 'LOCAL' },
+      { name: '東華之聲 花蓮大學',             url: 'http://radio.ndhu.edu.tw/radio.mp3',                   icon: '🎓', genre: 'UNI'   },
     ]
   },
   {
     id: 'islands', label: '金門 / 離島',
     stations: [
-      { name: '微微笑 大金廣播 FM106.3 金門', url: 'http://211.72.65.63:8080/',                          icon: '🏝️', genre: 'LOCAL [HTTP]' },
+      { name: '微微笑 大金廣播 FM106.3 金門', url: 'http://211.72.65.63:8080/',                            icon: '🏝️', genre: 'LOCAL' },
     ]
   },
 ];
 
-// ── State ──────────────────────────────────────────────────────
-const audio    = document.getElementById('audio');
-const playerEl = document.getElementById('player');
-const btnEl    = document.getElementById('play-btn');
-const nameEl   = document.getElementById('p-name');
-const statusEl = document.getElementById('p-status');
-const artEl    = document.getElementById('p-art');
-const tabsEl   = document.getElementById('region-tabs');
-const listEl   = document.getElementById('station-list');
+// ── DOM refs ────────────────────────────────────────────────────
+const audio       = document.getElementById('audio');
+const playerEl    = document.getElementById('player');
+const playBtn     = document.getElementById('play-btn');
+const sleepBtn    = document.getElementById('sleep-btn');
+const nameEl      = document.getElementById('p-name');
+const statusEl    = document.getElementById('p-status');
+const artEl       = document.getElementById('p-art');
+const tabsEl      = document.getElementById('region-tabs');
+const listEl      = document.getElementById('station-list');
+const searchInput = document.getElementById('search-input');
+const searchClear = document.getElementById('search-clear');
+const noResult    = document.getElementById('search-no-result');
+const volSlider   = document.getElementById('vol-slider');
+const volPct      = document.getElementById('vol-pct');
+const guideModal  = document.getElementById('guide-modal');
 
+// ── App state ───────────────────────────────────────────────────
 let hls            = null;
 let currentStation = null;
 let isPlaying      = false;
-let allCards       = [];
+let currentRegion  = 'all';
 
-// ── Build tabs ─────────────────────────────────────────────────
-function mkTab(id, label, active) {
-  const btn = document.createElement('button');
-  btn.className = 'region-tab' + (active ? ' active' : '');
-  btn.textContent = label;
-  btn.dataset.rid = id;
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.region-tab').forEach(t => t.classList.toggle('active', t.dataset.rid === id));
-    document.querySelectorAll('.region-group').forEach(g => g.classList.toggle('visible', id === 'all' || g.dataset.rid === id));
-  });
-  tabsEl.appendChild(btn);
+// Sleep timer
+const SLEEP_STEPS  = [15, 30, 60, 90]; // minutes
+let sleepStepIdx   = -1;   // -1 = off
+let sleepTimerId   = null;
+let sleepFadeId    = null;
+let sleepEndTime   = null;
+let sleepTickId    = null;
+
+// Card registry (all groups combined)
+let allCardEntries = []; // { card, station }
+
+// Separate group container refs
+let favGroup    = null;
+let recentGroup = null;
+
+// ── localStorage helpers ────────────────────────────────────────
+function lsGet(key, fallback) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch { return fallback; }
 }
-mkTab('all', '全部', true);
-regions.forEach(r => mkTab(r.id, r.label, false));
+function lsSet(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+}
 
-// ── Build cards ────────────────────────────────────────────────
-regions.forEach(region => {
-  const group = document.createElement('div');
-  group.className = 'region-group visible';
-  group.dataset.rid = region.id;
+let favorites = lsGet('tw_radio_fav', []);    // array of station names
+let recents   = lsGet('tw_radio_recent', []); // array of {name,url,icon,genre}
 
+function saveFavorites() { lsSet('tw_radio_fav', favorites); }
+function saveRecents()   { lsSet('tw_radio_recent', recents); }
+
+function isFav(name) { return favorites.includes(name); }
+
+function toggleFav(name) {
+  if (isFav(name)) {
+    favorites = favorites.filter(n => n !== name);
+  } else {
+    favorites = [name, ...favorites];
+  }
+  saveFavorites();
+  // update all fav buttons for this station
+  allCardEntries.forEach(({ card, station }) => {
+    if (station.name === name) {
+      const btn = card.querySelector('.fav-btn');
+      if (btn) { btn.textContent = isFav(name) ? '★' : '☆'; btn.classList.toggle('on', isFav(name)); }
+    }
+  });
+  rebuildFavGroup();
+}
+
+function addRecent(s) {
+  recents = [s, ...recents.filter(r => r.name !== s.name)].slice(0, 6);
+  saveRecents();
+}
+
+// ── Build a station card (factory) ─────────────────────────────
+function buildCard(s) {
+  const card = document.createElement('div');
+  card.className = 'station-card';
+  card.setAttribute('role', 'button');
+  card.setAttribute('tabindex', '0');
+  card.setAttribute('data-name', s.name);
+
+  // Health dot
+  card.innerHTML =
+    `<div class="s-icon">${s.icon}<span class="health-dot loading"></span></div>` +
+    `<div class="s-info">` +
+      `<div class="s-name">${s.name}</div>` +
+      `<div class="s-meta">${s.genre}</div>` +
+    `</div>` +
+    `<div class="eq-bars"><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div></div>` +
+    `<button class="fav-btn ${isFav(s.name) ? 'on' : ''}" aria-label="收藏" title="收藏 / 取消收藏">${isFav(s.name) ? '★' : '☆'}</button>`;
+
+  // Fav button — stop propagation so card click doesn't fire
+  const favB = card.querySelector('.fav-btn');
+  favB.addEventListener('click', e => { e.stopPropagation(); toggleFav(s.name); });
+  favB.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); toggleFav(s.name); } });
+
+  // Card click
+  card.addEventListener('click', () => onCardClick(s, card));
+  card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onCardClick(s, card); } });
+
+  return card;
+}
+
+// ── Build tabs ──────────────────────────────────────────────────
+function buildTabs() {
+  const tabDefs = [
+    { id: 'all',    label: '全部'    },
+    { id: 'fav',    label: '★ 我的最愛' },
+    { id: 'recent', label: '🕘 最近播放' },
+    ...REGIONS.map(r => ({ id: r.id, label: r.label })),
+  ];
+
+  tabDefs.forEach((t, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'region-tab' + (idx === 0 ? ' active' : '');
+    btn.textContent = t.label;
+    btn.dataset.rid = t.id;
+    btn.addEventListener('click', () => switchRegion(t.id, btn));
+    tabsEl.appendChild(btn);
+  });
+}
+
+function switchRegion(id, clickedBtn) {
+  currentRegion = id;
+  document.querySelectorAll('.region-tab').forEach(t => t.classList.toggle('active', t.dataset.rid === id));
+
+  // Clear search when switching tabs
+  if (searchInput.value) clearSearch();
+
+  document.querySelectorAll('.region-group').forEach(g => {
+    const gid = g.dataset.rid;
+    let show = false;
+    if (id === 'all')    show = (gid !== 'fav' && gid !== 'recent');
+    else                  show = (gid === id);
+    g.classList.toggle('visible', show);
+  });
+
+  updateActiveStates();
+}
+
+// ── Build main region groups ────────────────────────────────────
+function buildMainGroups() {
+  // Favorites group
+  favGroup = document.createElement('div');
+  favGroup.className = 'region-group';
+  favGroup.dataset.rid = 'fav';
+  listEl.appendChild(favGroup);
+  rebuildFavGroup();
+
+  // Recents group
+  recentGroup = document.createElement('div');
+  recentGroup.className = 'region-group';
+  recentGroup.dataset.rid = 'recent';
+  listEl.appendChild(recentGroup);
+  rebuildRecentGroup();
+
+  // Regional groups
+  REGIONS.forEach(region => {
+    const group = document.createElement('div');
+    group.className = 'region-group visible';
+    group.dataset.rid = region.id;
+
+    const lbl = document.createElement('div');
+    lbl.className = 'region-label';
+    lbl.textContent = region.label;
+    group.appendChild(lbl);
+
+    region.stations.forEach(s => {
+      const card = buildCard(s);
+      group.appendChild(card);
+      allCardEntries.push({ card, station: s });
+    });
+
+    listEl.appendChild(group);
+  });
+}
+
+function rebuildFavGroup() {
+  // Remove old fav card entries
+  allCardEntries = allCardEntries.filter(e => e.card.closest('[data-rid="fav"]') === null);
+
+  favGroup.innerHTML = '';
   const lbl = document.createElement('div');
   lbl.className = 'region-label';
-  lbl.textContent = region.label;
-  group.appendChild(lbl);
+  lbl.textContent = favorites.length ? '已收藏的電台' : '我的最愛';
+  favGroup.appendChild(lbl);
 
-  region.stations.forEach(s => {
-    const card = document.createElement('div');
-    card.className = 'station-card';
-    card.setAttribute('role', 'button');
-    card.setAttribute('tabindex', '0');
-    card.innerHTML =
-      `<div class="s-icon">${s.icon}</div>` +
-      `<div class="s-info">` +
-        `<div class="s-name">${s.name}</div>` +
-        `<div class="s-meta">${s.genre}</div>` +
-      `</div>` +
-      `<div class="eq-bars">` +
-        `<div class="eq-bar"></div><div class="eq-bar"></div>` +
-        `<div class="eq-bar"></div><div class="eq-bar"></div>` +
-      `</div>`;
-    card.addEventListener('click', () => onCardClick(s, card));
-    card.addEventListener('keydown', e => (e.key === 'Enter' || e.key === ' ') && onCardClick(s, card));
-    group.appendChild(card);
-    allCards.push({ card, station: s });
+  if (!favorites.length) {
+    const hint = document.createElement('div');
+    hint.className = 'empty-hint';
+    hint.textContent = '點擊電台卡片右側的 ☆ 即可收藏，\n方便下次快速找到常聽的電台。';
+    favGroup.appendChild(hint);
+    return;
+  }
+
+  favorites.forEach(name => {
+    let s = null;
+    REGIONS.forEach(r => { const f = r.stations.find(st => st.name === name); if (f) s = f; });
+    if (!s) return;
+    const card = buildCard(s);
+    favGroup.appendChild(card);
+    allCardEntries.push({ card, station: s });
   });
 
-  listEl.appendChild(group);
-});
+  updateActiveStates();
+  scheduleHealthCheck();
+}
 
-// ── Playback ───────────────────────────────────────────────────
+function rebuildRecentGroup() {
+  // Remove old recent card entries
+  allCardEntries = allCardEntries.filter(e => e.card.closest('[data-rid="recent"]') === null);
+
+  recentGroup.innerHTML = '';
+  const lbl = document.createElement('div');
+  lbl.className = 'region-label';
+  lbl.textContent = recents.length ? '最近播放' : '最近播放';
+  recentGroup.appendChild(lbl);
+
+  if (!recents.length) {
+    const hint = document.createElement('div');
+    hint.className = 'empty-hint';
+    hint.textContent = '播放電台後會自動記錄在這裡，\n最多保留 6 個。';
+    recentGroup.appendChild(hint);
+    return;
+  }
+
+  recents.forEach(s => {
+    const card = buildCard(s);
+    recentGroup.appendChild(card);
+    allCardEntries.push({ card, station: s });
+  });
+
+  updateActiveStates();
+  scheduleHealthCheck();
+}
+
+// ── Active state ────────────────────────────────────────────────
+function updateActiveStates() {
+  allCardEntries.forEach(({ card, station }) => {
+    const isActive  = currentStation && station.name === currentStation.name;
+    const isPlaying2 = isActive && isPlaying;
+    card.classList.toggle('active',  isActive);
+    card.classList.toggle('playing', isPlaying2);
+  });
+}
+
+// ── Search ──────────────────────────────────────────────────────
+function handleSearch() {
+  const q = searchInput.value.trim().toLowerCase();
+  searchClear.style.display = q ? 'flex' : 'none';
+
+  if (!q) {
+    // Restore tab view
+    allCardEntries.forEach(({ card }) => card.style.display = '');
+    document.querySelectorAll('.region-label, .empty-hint').forEach(el => el.style.display = '');
+    switchRegion(currentRegion, null);
+    noResult.style.display = 'none';
+    return;
+  }
+
+  // Show all groups
+  document.querySelectorAll('.region-group').forEach(g => g.classList.add('visible'));
+  document.querySelectorAll('.region-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.region-label, .empty-hint').forEach(el => el.style.display = 'none');
+
+  let anyVisible = false;
+  allCardEntries.forEach(({ card, station }) => {
+    const match = station.name.toLowerCase().includes(q) || station.genre.toLowerCase().includes(q);
+    card.style.display = match ? '' : 'none';
+    if (match) anyVisible = true;
+  });
+  noResult.style.display = anyVisible ? 'none' : 'block';
+}
+
+function clearSearch() {
+  searchInput.value = '';
+  handleSearch();
+  searchInput.blur();
+}
+
+searchInput.addEventListener('input', handleSearch);
+searchClear.addEventListener('click', clearSearch);
+
+// ── Playback ────────────────────────────────────────────────────
 function onCardClick(s, card) {
   if (currentStation && currentStation.name === s.name) {
     togglePlay();
@@ -407,113 +810,252 @@ function loadStation(s, card) {
   audio.src = '';
 
   currentStation = s;
-  allCards.forEach(({ card: c }) => { c.classList.remove('active', 'playing', 'error'); });
+  addRecent(s);
+  rebuildRecentGroup();
+
+  // Clear all active states
+  allCardEntries.forEach(({ card: c }) => c.classList.remove('active', 'playing', 'error'));
   card.classList.add('active');
 
-  btnEl.disabled  = false;
-  btnEl.className = 'loading';
-  nameEl.textContent  = s.name;
+  playBtn.disabled     = false;
+  playBtn.className    = 'loading';
+  nameEl.textContent   = s.name;
   statusEl.textContent = '載入中…';
-  statusEl.style.color = '#888';
-  artEl.textContent   = s.icon;
+  statusEl.style.color = '';
+  artEl.textContent    = s.icon;
   playerEl.classList.add('active');
 
-  const url = s.url;
+  const url   = s.url;
   const isHLS = /\.(m3u8|m3u)/.test(url) || /playlist|chunklist/.test(url);
 
   if (isHLS) {
     if (Hls.isSupported()) {
-      hls = new Hls({ enableWorker: true });
+      hls = new Hls({ enableWorker: true, maxBufferLength: 30 });
       hls.loadSource(url);
       hls.attachMedia(audio);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => audio.play().catch(e => handleErr(e, card)));
-      hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) handleErr(null, card); });
+      hls.on(Hls.Events.MANIFEST_PARSED, () => audio.play().catch(() => onPlayError(s, card)));
+      hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) onPlayError(s, card); });
     } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
       audio.src = url;
-      audio.play().catch(e => handleErr(e, card));
+      audio.play().catch(() => onPlayError(s, card));
     }
   } else {
     audio.src = url;
-    audio.play().catch(e => handleErr(e, card));
+    audio.play().catch(() => onPlayError(s, card));
   }
 
   setupMediaSession(s);
 }
 
-function handleErr(err, card) {
+function onPlayError(s, card) {
   card.classList.add('error');
-  btnEl.className     = '';
-  statusEl.textContent = '❌ 播放失敗';
-  statusEl.style.color = '#ef4444';
-  // Show mixed-content guide only for HTTP streams on HTTPS pages
-  if (window.location.protocol === 'https:' && currentStation && currentStation.url.startsWith('http:')) {
-    document.getElementById('guide-modal').style.display = 'flex';
+  playBtn.className    = '';
+  statusEl.textContent = '播放失敗';
+  statusEl.style.color = '#EF4444';
+  if (window.location.protocol === 'https:' && s.url.startsWith('http:')) {
+    guideModal.style.display = 'flex';
   }
 }
 
 function togglePlay() {
   if (!currentStation) return;
-  isPlaying ? audio.pause() : audio.play().catch(() => {});
+  if (isPlaying) { audio.pause(); }
+  else           { audio.play().catch(() => {}); }
 }
 
-btnEl.addEventListener('click', togglePlay);
+playBtn.addEventListener('click', togglePlay);
 
 audio.addEventListener('playing', () => {
   isPlaying = true;
-  btnEl.className = 'playing';
+  playBtn.className    = 'playing';
   statusEl.textContent = '● 直播中';
-  statusEl.style.color = '#F59E0B';
-  allCards.forEach(({ card, station }) => {
-    if (station.name === currentStation?.name) card.classList.add('playing');
-  });
+  statusEl.style.color = '';
+  updateActiveStates();
 });
 audio.addEventListener('pause', () => {
   isPlaying = false;
-  btnEl.className = '';
-  statusEl.textContent = '已暫停';
-  statusEl.style.color = '#888';
-  allCards.forEach(({ card }) => card.classList.remove('playing'));
+  playBtn.className    = '';
+  statusEl.textContent = currentStation ? '已暫停' : '尚未播放';
+  statusEl.style.color = '';
+  updateActiveStates();
 });
 audio.addEventListener('waiting', () => {
-  btnEl.className = 'loading';
+  playBtn.className    = 'loading';
   statusEl.textContent = '緩衝中…';
-  statusEl.style.color = '#888';
 });
 audio.addEventListener('error', () => {
-  const card = allCards.find(({ station }) => station.name === currentStation?.name)?.card;
-  if (card) handleErr(null, card);
+  if (!currentStation) return;
+  const entry = allCardEntries.find(e => e.station.name === currentStation.name);
+  if (entry) onPlayError(currentStation, entry.card);
 });
 
+// Guide modal buttons
+document.getElementById('guide-reload').addEventListener('click', () => location.reload());
+document.getElementById('guide-close').addEventListener('click', () => { guideModal.style.display = 'none'; });
+
+// ── Volume ──────────────────────────────────────────────────────
+const savedVol = parseFloat(lsGet('tw_radio_vol', 1));
+audio.volume   = savedVol;
+volSlider.value = savedVol;
+volPct.textContent = Math.round(savedVol * 100) + '%';
+
+volSlider.addEventListener('input', () => {
+  const v       = parseFloat(volSlider.value);
+  audio.volume  = v;
+  volPct.textContent = Math.round(v * 100) + '%';
+  lsSet('tw_radio_vol', v);
+});
+
+// ── Sleep Timer ─────────────────────────────────────────────────
+function clearSleepTimer() {
+  if (sleepTimerId)  { clearTimeout(sleepTimerId);   sleepTimerId  = null; }
+  if (sleepFadeId)   { clearInterval(sleepFadeId);   sleepFadeId   = null; }
+  if (sleepTickId)   { clearInterval(sleepTickId);   sleepTickId   = null; }
+  sleepEndTime = null;
+  sleepStepIdx = -1;
+}
+
+function startSleepTimer(minutes) {
+  clearSleepTimer();
+  const ms     = minutes * 60 * 1000;
+  sleepEndTime = Date.now() + ms;
+
+  sleepTickId = setInterval(updateSleepDisplay, 1000);
+  updateSleepDisplay();
+
+  sleepTimerId = setTimeout(() => {
+    // Fade out over 8 seconds
+    const startVol = audio.volume;
+    const steps    = 16;
+    let   step     = 0;
+    sleepFadeId = setInterval(() => {
+      step++;
+      audio.volume = Math.max(0, startVol * (1 - step / steps));
+      if (step >= steps) {
+        clearInterval(sleepFadeId); sleepFadeId = null;
+        audio.pause();
+        audio.volume  = startVol; // restore
+        volSlider.value = startVol;
+        clearSleepTimer();
+        sleepBtn.textContent = '⏱';
+        sleepBtn.classList.remove('active');
+        if (currentStation) statusEl.textContent = '睡眠定時停播';
+      }
+    }, 500);
+  }, ms);
+}
+
+function updateSleepDisplay() {
+  if (!sleepEndTime) return;
+  const rem  = Math.max(0, sleepEndTime - Date.now());
+  const mins = Math.floor(rem / 60000);
+  const secs = Math.floor((rem % 60000) / 1000);
+  sleepBtn.textContent = mins > 0
+    ? `${mins}m`
+    : `${secs}s`;
+}
+
+sleepBtn.addEventListener('click', () => {
+  // Cycle: -1 → 0 → 1 → 2 → 3 → -1 (off)
+  sleepStepIdx = (sleepStepIdx + 1) % (SLEEP_STEPS.length + 1);
+  if (sleepStepIdx === SLEEP_STEPS.length) {
+    // Back to off
+    clearSleepTimer();
+    sleepBtn.textContent = '⏱';
+    sleepBtn.classList.remove('active');
+    if (currentStation && isPlaying) statusEl.textContent = '● 直播中';
+    return;
+  }
+  const minutes = SLEEP_STEPS[sleepStepIdx];
+  sleepBtn.classList.add('active');
+  startSleepTimer(minutes);
+  if (currentStation) statusEl.textContent = `定時 ${minutes} 分後停播`;
+});
+
+// ── Health Check ────────────────────────────────────────────────
+let healthCheckScheduled = false;
+
+function scheduleHealthCheck() {
+  if (healthCheckScheduled) return;
+  healthCheckScheduled = true;
+  // Run after a short delay so UI renders first
+  setTimeout(runHealthChecks, 1000);
+}
+
+async function runHealthChecks() {
+  const entries = [...allCardEntries]; // snapshot
+  let delay     = 0;
+  for (const { card, station } of entries) {
+    const dot = card.querySelector('.health-dot');
+    if (!dot) continue;
+    setTimeout(() => checkStation(station.url, dot), delay);
+    delay += 120; // stagger by 120ms
+  }
+}
+
+async function checkStation(url, dot) {
+  // HTTP streams can't be checked from HTTPS pages (mixed content)
+  if (window.location.protocol === 'https:' && url.startsWith('http:')) {
+    dot.className = 'health-dot http';
+    dot.title = 'HTTP 串流（需允許混合內容）';
+    return;
+  }
+
+  const ctrl = new AbortController();
+  const tid  = setTimeout(() => ctrl.abort(), 8000);
+
+  try {
+    await fetch(url, {
+      method: 'GET',
+      mode:   'no-cors',
+      signal: ctrl.signal,
+    });
+    clearTimeout(tid);
+    dot.className = 'health-dot ok';
+    dot.title     = '連線正常';
+  } catch (e) {
+    clearTimeout(tid);
+    if (e.name === 'AbortError') {
+      dot.className = 'health-dot';
+      dot.title     = '連線逾時';
+    } else {
+      dot.className = 'health-dot error';
+      dot.title     = '無法連線';
+    }
+  }
+}
+
+// ── Media Session ───────────────────────────────────────────────
 function setupMediaSession(s) {
   if (!('mediaSession' in navigator)) return;
   navigator.mediaSession.metadata = new MediaMetadata({
-    title:  s.name,
-    artist: '台灣廣播 Radiolist',
-    album:  'Live FM Radio',
-    artwork: [{ src: 'https://cdn-icons-png.flaticon.com/512/3239/3239594.png', sizes: '512x512', type: 'image/png' }]
+    title:   s.name,
+    artist:  '台灣廣播 Radiolist',
+    album:   'Live FM Radio',
+    artwork: [{ src: 'https://cdn-icons-png.flaticon.com/512/3239/3239594.png', sizes: '512x512', type: 'image/png' }],
   });
-  navigator.mediaSession.setActionHandler('play',  () => audio.play());
+  navigator.mediaSession.setActionHandler('play',  () => audio.play().catch(() => {}));
   navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+  navigator.mediaSession.setActionHandler('stop',  () => { audio.pause(); audio.src = ''; });
+}
+
+// ── Service Worker ──────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+// ── Init ─────────────────────────────────────────────────────────
+buildTabs();
+buildMainGroups();
+scheduleHealthCheck();
+
+// Restore last played station info (display only, don't auto-play)
+const lastStation = lsGet('tw_radio_last', null);
+if (lastStation) {
+  nameEl.textContent   = lastStation.name;
+  artEl.textContent    = lastStation.icon;
+  statusEl.textContent = '上次播放';
 }
 </script>
 </body>
 </html>
-
-<!--
-╔════════════════════════════════════════════════════════════════╗
-║  PWA manifest.json — 放在同目錄下，取消 <head> 裡的連結       ║
-╠════════════════════════════════════════════════════════════════╣
-║  {                                                             ║
-║    "name": "台灣廣播 Radiolist",                               ║
-║    "short_name": "台灣廣播",                                   ║
-║    "start_url": "/index.html",                                 ║
-║    "display": "standalone",                                    ║
-║    "background_color": "#0A0A0F",                              ║
-║    "theme_color": "#0A0A0F",                                   ║
-║    "icons": [                                                  ║
-║      {"src":"icon-cute-radio.png","sizes":"512x512",           ║
-║       "type":"image/png","purpose":"any maskable"}             ║
-║    ]                                                           ║
-║  }                                                             ║
-╚════════════════════════════════════════════════════════════════╝
--->
