@@ -31,7 +31,7 @@
       --text-primary:  #F0EDE6;
       --text-muted:    #5A5754;
       --text-sub:      #9D9A94;
-      --player-h:      118px; /* main row + volume row */
+      --player-h:      118px;
       --safe-bottom:   env(safe-area-inset-bottom, 0px);
       --safe-top:      env(safe-area-inset-top, 0px);
     }
@@ -40,19 +40,14 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
     body {
-      background: var(--bg-base);
-      color: var(--text-primary);
+      background: var(--bg-base); color: var(--text-primary);
       font-family: 'Noto Sans TC', sans-serif;
       -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
-      overscroll-behavior: none;
+      overflow-x: hidden; overscroll-behavior: none;
     }
     button { font-family: inherit; }
-
-    /* Ambient glow */
     body::before {
-      content: '';
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
       background:
         radial-gradient(ellipse 70% 40% at 50% -5%, rgba(245,158,11,.09) 0%, transparent 60%),
         radial-gradient(ellipse 35% 25% at 85% 105%, rgba(139,92,246,.06) 0%, transparent 55%);
@@ -65,7 +60,11 @@
     }
 
     /* ── Header ────────────────────────────────────── */
-    header { padding: calc(var(--safe-top) + 48px) 20px 12px; }
+    header {
+      padding: calc(var(--safe-top) + 48px) 20px 12px;
+      display: flex; align-items: flex-end; justify-content: space-between;
+    }
+    .header-left {}
     .header-sup {
       font-family: 'Space Mono', monospace;
       font-size: 10px; letter-spacing: .18em; color: var(--amber);
@@ -73,33 +72,41 @@
     }
     h1 { font-size: 24px; font-weight: 700; letter-spacing: -.02em; }
 
-    /* ── Search bar ────────────────────────────────── */
-    .search-wrap {
-      padding: 12px 20px 4px;
-      position: relative;
+    /* Driving mode toggle in header */
+    #drive-toggle {
+      flex-shrink: 0; width: 44px; height: 44px; border-radius: 12px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      color: var(--text-muted); font-size: 20px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s, border-color .2s, color .2s;
+      -webkit-tap-highlight-color: transparent;
+      margin-bottom: 2px;
     }
+    #drive-toggle:active { transform: scale(.92); }
+    #drive-toggle.on {
+      background: var(--amber-dim); border-color: rgba(245,158,11,.5);
+      color: var(--amber);
+    }
+
+    /* ── Search bar ────────────────────────────────── */
+    .search-wrap { padding: 12px 20px 4px; position: relative; }
     .search-wrap svg {
       position: absolute; left: 34px; top: 50%; transform: translateY(-50%);
       width: 16px; height: 16px; color: var(--text-muted); pointer-events: none;
     }
     #search-input {
       width: 100%; padding: 10px 14px 10px 38px;
-      background: rgba(255,255,255,.05);
-      border: 1px solid var(--border);
+      background: rgba(255,255,255,.05); border: 1px solid var(--border);
       border-radius: 12px; color: var(--text-primary);
       font-size: 14px; font-family: 'Noto Sans TC', sans-serif;
       outline: none; transition: border-color .2s, background .2s;
     }
     #search-input::placeholder { color: var(--text-muted); }
-    #search-input:focus {
-      border-color: rgba(245,158,11,.4);
-      background: rgba(255,255,255,.07);
-    }
+    #search-input:focus { border-color: rgba(245,158,11,.4); background: rgba(255,255,255,.07); }
     #search-clear {
       position: absolute; right: 28px; top: 50%; transform: translateY(-50%);
       background: none; border: none; color: var(--text-muted);
-      font-size: 18px; cursor: pointer; padding: 4px 8px; display: none;
-      line-height: 1;
+      font-size: 18px; cursor: pointer; padding: 4px 8px; display: none; line-height: 1;
     }
     #search-no-result {
       display: none; text-align: center; padding: 40px 20px;
@@ -109,8 +116,7 @@
     /* ── Region tabs ───────────────────────────────── */
     .tabs-wrap {
       overflow-x: auto; -webkit-overflow-scrolling: touch;
-      scrollbar-width: none; padding: 12px 20px 14px;
-      display: flex; gap: 8px;
+      scrollbar-width: none; padding: 12px 20px 14px; display: flex; gap: 8px;
     }
     .tabs-wrap::-webkit-scrollbar { display: none; }
     .region-tab {
@@ -140,16 +146,14 @@
       display: flex; align-items: center; gap: 12px;
       padding: 11px 12px; background: var(--bg-card);
       border: 1px solid var(--border); border-radius: 14px;
-      cursor: pointer; min-height: 64px; position: relative;
-      overflow: hidden; transition: background .18s, border-color .18s, transform .1s;
+      cursor: pointer; min-height: 64px; position: relative; overflow: hidden;
+      transition: background .18s, border-color .18s, transform .1s;
       -webkit-tap-highlight-color: transparent;
     }
     .station-card:active { transform: scale(.985); }
     .station-card:hover { background: var(--bg-card-hover); border-color: rgba(255,255,255,.12); }
     .station-card:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
-    .station-card.active {
-      background: var(--amber-dim); border-color: rgba(245,158,11,.42);
-    }
+    .station-card.active { background: var(--amber-dim); border-color: rgba(245,158,11,.42); }
     .station-card.active::before {
       content: ''; position: absolute; left: 0; top: 0; bottom: 0;
       width: 3px; background: var(--amber); border-radius: 0 2px 2px 0;
@@ -160,20 +164,17 @@
     .s-icon {
       width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0;
       background: rgba(255,255,255,.06); display: flex; align-items: center;
-      justify-content: center; font-size: 19px; position: relative;
-      transition: background .2s;
+      justify-content: center; font-size: 19px; position: relative; transition: background .2s;
     }
     .station-card.active .s-icon { background: rgba(245,158,11,.18); }
     .health-dot {
       position: absolute; bottom: 1px; right: 1px;
       width: 8px; height: 8px; border-radius: 50%;
-      border: 1.5px solid var(--bg-base);
-      background: #3A3A3A; /* default: unknown */
-      transition: background .4s;
+      border: 1.5px solid var(--bg-base); background: #3A3A3A; transition: background .4s;
     }
-    .health-dot.ok     { background: #22C55E; }
-    .health-dot.error  { background: #EF4444; }
-    .health-dot.http   { background: #EAB308; }
+    .health-dot.ok      { background: #22C55E; }
+    .health-dot.error   { background: #EF4444; }
+    .health-dot.http    { background: #EAB308; } /* HTTP without proxy */
     .health-dot.loading { background: #3A3A3A; animation: pulse-dot 1s ease-in-out infinite; }
     @keyframes pulse-dot { 0%,100%{opacity:.4} 50%{opacity:1} }
 
@@ -203,10 +204,8 @@
     .fav-btn {
       width: 38px; height: 38px; flex-shrink: 0; border: none;
       background: none; color: var(--text-muted); font-size: 18px;
-      cursor: pointer; border-radius: 8px; display: flex;
-      align-items: center; justify-content: center;
-      transition: color .2s, transform .15s;
-      -webkit-tap-highlight-color: transparent;
+      cursor: pointer; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      transition: color .2s, transform .15s; -webkit-tap-highlight-color: transparent;
     }
     .fav-btn:active { transform: scale(.85); }
     .fav-btn.on { color: var(--amber); }
@@ -220,15 +219,12 @@
       border-top: 1px solid rgba(255,255,255,.1);
       padding-bottom: var(--safe-bottom);
     }
-    /* amber accent bar */
     #player::before {
       content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
       background: linear-gradient(90deg, var(--amber), rgba(245,158,11,.1));
       opacity: 0; transition: opacity .35s;
     }
     #player.active::before { opacity: 1; }
-
-    /* main row */
     .player-main {
       display: flex; align-items: center; gap: 12px;
       padding: 12px 16px 6px; max-width: 600px; margin: 0 auto;
@@ -241,14 +237,10 @@
     }
     #player.active .p-art { border-color: rgba(245,158,11,.4); }
     .p-meta { flex: 1; min-width: 0; }
-    #p-name {
-      font-size: 14px; font-weight: 500;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
+    #p-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     #p-status {
       font-size: 10px; color: var(--text-muted);
-      font-family: 'Space Mono', monospace; margin-top: 2px;
-      transition: color .3s;
+      font-family: 'Space Mono', monospace; margin-top: 2px; transition: color .3s;
     }
     #player.active #p-status { color: var(--amber); }
 
@@ -262,10 +254,7 @@
       transition: background .2s, border-color .2s, color .2s;
       -webkit-tap-highlight-color: transparent;
     }
-    #sleep-btn.active {
-      background: rgba(245,158,11,.15); border-color: rgba(245,158,11,.4);
-      color: var(--amber);
-    }
+    #sleep-btn.active { background: var(--amber-dim); border-color: rgba(245,158,11,.4); color: var(--amber); }
 
     /* play/pause button */
     #play-btn {
@@ -306,8 +295,7 @@
     .vol-icon { font-size: 13px; color: var(--text-muted); flex-shrink: 0; user-select: none; }
     #vol-slider {
       flex: 1; height: 3px; -webkit-appearance: none; appearance: none;
-      background: rgba(255,255,255,.12); border-radius: 3px; outline: none;
-      cursor: pointer;
+      background: rgba(255,255,255,.12); border-radius: 3px; outline: none; cursor: pointer;
     }
     #vol-slider::-webkit-slider-thumb {
       -webkit-appearance: none; width: 16px; height: 16px;
@@ -323,7 +311,7 @@
       color: var(--text-muted); width: 30px; text-align: right; flex-shrink: 0;
     }
 
-    /* ── Guide Modal (HTTP mixed content) ──────────── */
+    /* ── Guide Modal ───────────────────────────────── */
     #guide-modal {
       display: none; position: fixed; inset: 0; z-index: 999;
       background: rgba(0,0,0,.85); backdrop-filter: blur(12px);
@@ -345,7 +333,112 @@
       color: #000; font-size: 14px; font-family: 'Noto Sans TC', sans-serif;
     }
 
-    /* hidden */
+    /* ══════════════════════════════════════════════════
+       DRIVING MODE
+       fullscreen overlay, finger-friendly, minimal UI
+    ══════════════════════════════════════════════════ */
+    #drive-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 500;
+      background: #060608;
+      flex-direction: column;
+      padding: calc(var(--safe-top) + 20px) 24px calc(var(--safe-bottom) + 20px);
+      align-items: center; justify-content: space-between;
+      gap: 16px;
+    }
+    #drive-overlay.visible { display: flex; }
+
+    /* top bar */
+    .drive-topbar {
+      width: 100%; display: flex; align-items: center; justify-content: space-between;
+    }
+    .drive-title {
+      font-family: 'Space Mono', monospace; font-size: 10px;
+      letter-spacing: .2em; color: rgba(245,158,11,.6); text-transform: uppercase;
+    }
+    #drive-exit {
+      padding: 10px 18px; border-radius: 10px;
+      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1);
+      color: var(--text-sub); font-size: 13px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* now-playing block */
+    .drive-now {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 12px;
+      text-align: center; width: 100%;
+    }
+    .drive-icon { font-size: 72px; line-height: 1; }
+    .drive-station-name {
+      font-size: 28px; font-weight: 700; letter-spacing: -.02em;
+      color: var(--text-primary); line-height: 1.2;
+      max-width: 320px;
+    }
+    .drive-status {
+      font-family: 'Space Mono', monospace; font-size: 12px;
+      color: var(--amber); letter-spacing: .08em;
+      min-height: 18px;
+    }
+
+    /* big play/pause */
+    #drive-play-btn {
+      width: 110px; height: 110px; border-radius: 50%;
+      background: var(--amber); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 50px rgba(245,158,11,.4), 0 0 0 12px rgba(245,158,11,.08);
+      transition: transform .15s, box-shadow .2s;
+      -webkit-tap-highlight-color: transparent; flex-shrink: 0;
+    }
+    #drive-play-btn:active { transform: scale(.93); }
+    .drive-icon-play {
+      width: 0; height: 0; border-style: solid;
+      border-width: 18px 0 18px 30px;
+      border-color: transparent transparent transparent #0A0A0F;
+      margin-left: 6px;
+    }
+    .drive-icon-pause { display: none; gap: 10px; }
+    .drive-icon-pause span { display: block; width: 8px; height: 32px; background: #0A0A0F; border-radius: 4px; }
+    .drive-icon-spin {
+      display: none; width: 36px; height: 36px;
+      border: 5px solid rgba(10,10,15,.25); border-top-color: #0A0A0F;
+      border-radius: 50%; animation: spin .65s linear infinite;
+    }
+    #drive-play-btn.loading .drive-icon-play  { display: none; }
+    #drive-play-btn.loading .drive-icon-pause { display: none; }
+    #drive-play-btn.loading .drive-icon-spin  { display: block; }
+    #drive-play-btn.playing .drive-icon-play  { display: none; }
+    #drive-play-btn.playing .drive-icon-pause { display: flex; }
+
+    /* shortcut grid */
+    .drive-shortcuts {
+      width: 100%;
+    }
+    .drive-shortcuts-label {
+      font-family: 'Space Mono', monospace; font-size: 9px;
+      letter-spacing: .14em; color: var(--text-muted);
+      text-transform: uppercase; margin-bottom: 10px; text-align: center;
+    }
+    .drive-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    }
+    .drive-shortcut {
+      padding: 14px 8px; border-radius: 14px;
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07);
+      color: var(--text-primary); font-size: 12px; text-align: center;
+      cursor: pointer; line-height: 1.4;
+      transition: background .15s, border-color .15s, transform .1s;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 70px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 6px;
+    }
+    .drive-shortcut:active { transform: scale(.96); }
+    .drive-shortcut.playing-now {
+      background: var(--amber-dim); border-color: rgba(245,158,11,.4);
+    }
+    .drive-shortcut-icon { font-size: 22px; }
+    .drive-shortcut-name { font-size: 11px; font-weight: 500; }
+
     #audio { display: none; }
   </style>
 </head>
@@ -353,8 +446,11 @@
 
 <div id="app">
   <header>
-    <div class="header-sup">🇹🇼 Live Radio</div>
-    <h1>台灣廣播 Radiolist</h1>
+    <div class="header-left">
+      <div class="header-sup">🇹🇼 Live Radio</div>
+      <h1>台灣廣播 Radiolist</h1>
+    </div>
+    <button id="drive-toggle" title="駕駛模式" aria-label="切換駕駛模式">🚗</button>
   </header>
 
   <!-- Search -->
@@ -362,7 +458,7 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
     </svg>
-    <input id="search-input" type="search" placeholder="搜尋電台名稱..." autocomplete="off" />
+    <input id="search-input" type="search" placeholder="搜尋電台名稱或類型 (POP / NEWS)..." autocomplete="off" />
     <button id="search-clear" aria-label="清除搜尋">×</button>
   </div>
 
@@ -374,7 +470,7 @@
   <div id="search-no-result">🔍 找不到符合的電台</div>
 </div>
 
-<!-- Player -->
+<!-- Normal Player -->
 <div id="player">
   <div class="player-main">
     <div class="p-art" id="p-art">📻</div>
@@ -396,6 +492,33 @@
   </div>
 </div>
 
+<!-- ════════════════════════════════════
+     DRIVING MODE OVERLAY
+════════════════════════════════════ -->
+<div id="drive-overlay">
+  <div class="drive-topbar">
+    <span class="drive-title">🚗 駕駛模式</span>
+    <button id="drive-exit">離開</button>
+  </div>
+
+  <div class="drive-now">
+    <div class="drive-icon" id="drive-art">📻</div>
+    <div class="drive-station-name" id="drive-name">請選擇電台</div>
+    <div class="drive-status" id="drive-status"></div>
+  </div>
+
+  <button id="drive-play-btn" disabled aria-label="播放 / 暫停">
+    <div class="drive-icon-play"></div>
+    <div class="drive-icon-pause"><span></span><span></span></div>
+    <div class="drive-icon-spin"></div>
+  </button>
+
+  <div class="drive-shortcuts">
+    <div class="drive-shortcuts-label">快速切換常用電台</div>
+    <div class="drive-grid" id="drive-grid"></div>
+  </div>
+</div>
+
 <!-- HTTP Guide Modal -->
 <div id="guide-modal">
   <div class="modal-box">
@@ -406,8 +529,9 @@
       點網址列左側「🔒」→「網站設定」→「不安全內容」→「允許」<br><br>
       <strong>📱 Android Chrome</strong><br>
       點右上角「⋮」→「網站設定」→「不安全內容」→「允許」<br><br>
-      <strong>💡 最佳方案</strong><br>
-      部署 <code>cloudflare-proxy.js</code>（附件），<br>可讓所有電台免設定直接播放。
+      <strong>💡 完整解法</strong><br>
+      部署 <code>cloudflare-proxy.js</code>，並在 JS 頂部設定<br>
+      <code>PROXY_BASE</code> 為你的 Worker 網址，即可一勞永逸。
     </div>
     <button class="btn-modal" id="guide-reload">✓ 已設定，重新整理</button>
     <button class="btn-modal" style="margin-top:8px;background:rgba(255,255,255,.08);color:#ccc;" id="guide-close">先關閉</button>
@@ -420,7 +544,24 @@
 'use strict';
 
 // ══════════════════════════════════════════════════════════════════
-//  資料庫 — 僅限 FM 電台，串流來源交叉驗證自 tingfm.com (2024-2025)
+//  ★ CLOUDFLARE PROXY 設定
+//  部署 cloudflare-proxy.js 後，填入你的 Worker URL（含 /proxy?url= 結尾）
+//  例：'https://tw-radio-proxy.yourname.workers.dev/proxy?url='
+//  留空字串 '' = 停用代理，HTTP 電台需手動允許混合內容
+// ══════════════════════════════════════════════════════════════════
+const PROXY_BASE = '';
+// const PROXY_BASE = 'https://radiolist.jinlyu13249.workers.dev/proxy?url=';
+
+// 自動將 HTTP 串流包上代理（如已設定）
+function proxyUrl(url) {
+  if (PROXY_BASE && url.startsWith('http:')) {
+    return PROXY_BASE + encodeURIComponent(url);
+  }
+  return url;
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  電台資料庫 — 僅限 FM，串流來源驗證自 tingfm.com (2024-2025)
 // ══════════════════════════════════════════════════════════════════
 const REGIONS = [
   {
@@ -508,74 +649,81 @@ const REGIONS = [
   },
 ];
 
-// ── DOM refs ────────────────────────────────────────────────────
-const audio       = document.getElementById('audio');
-const playerEl    = document.getElementById('player');
-const playBtn     = document.getElementById('play-btn');
-const sleepBtn    = document.getElementById('sleep-btn');
-const nameEl      = document.getElementById('p-name');
-const statusEl    = document.getElementById('p-status');
-const artEl       = document.getElementById('p-art');
-const tabsEl      = document.getElementById('region-tabs');
-const listEl      = document.getElementById('station-list');
-const searchInput = document.getElementById('search-input');
-const searchClear = document.getElementById('search-clear');
-const noResult    = document.getElementById('search-no-result');
-const volSlider   = document.getElementById('vol-slider');
-const volPct      = document.getElementById('vol-pct');
-const guideModal  = document.getElementById('guide-modal');
+// 駕駛模式快捷電台（從 REGIONS 中挑選常用 6 個）
+const DRIVE_SHORTCUTS = [
+  '警廣全國交通網 FM104.9',
+  'ICRT FM100.7',
+  '中廣流行網 I like Radio FM103',
+  '好事聯播網 Best FM98.9 北部',
+  '飛碟電台 UFO FM92.1',
+  '九八新聞台 News98 FM98.1',
+];
 
-// ── App state ───────────────────────────────────────────────────
+// ── DOM refs ─────────────────────────────────────────────────────
+const audio        = document.getElementById('audio');
+const playerEl     = document.getElementById('player');
+const playBtn      = document.getElementById('play-btn');
+const sleepBtn     = document.getElementById('sleep-btn');
+const nameEl       = document.getElementById('p-name');
+const statusEl     = document.getElementById('p-status');
+const artEl        = document.getElementById('p-art');
+const tabsEl       = document.getElementById('region-tabs');
+const listEl       = document.getElementById('station-list');
+const searchInput  = document.getElementById('search-input');
+const searchClear  = document.getElementById('search-clear');
+const noResult     = document.getElementById('search-no-result');
+const volSlider    = document.getElementById('vol-slider');
+const volPct       = document.getElementById('vol-pct');
+const guideModal   = document.getElementById('guide-modal');
+const driveOverlay = document.getElementById('drive-overlay');
+const driveToggle  = document.getElementById('drive-toggle');
+const driveExit    = document.getElementById('drive-exit');
+const driveArtEl   = document.getElementById('drive-art');
+const driveNameEl  = document.getElementById('drive-name');
+const driveStatusEl= document.getElementById('drive-status');
+const drivePlayBtn = document.getElementById('drive-play-btn');
+const driveGrid    = document.getElementById('drive-grid');
+
+// ── State ─────────────────────────────────────────────────────────
 let hls            = null;
 let currentStation = null;
 let isPlaying      = false;
 let currentRegion  = 'all';
+let driveMode      = false;
 
-// Sleep timer
-const SLEEP_STEPS  = [15, 30, 60, 90]; // minutes
-let sleepStepIdx   = -1;   // -1 = off
+const SLEEP_STEPS  = [15, 30, 60, 90];
+let sleepStepIdx   = -1;
 let sleepTimerId   = null;
 let sleepFadeId    = null;
 let sleepEndTime   = null;
 let sleepTickId    = null;
 
-// Card registry (all groups combined)
-let allCardEntries = []; // { card, station }
+let allCardEntries = [];
+let favGroup       = null;
+let recentGroup    = null;
 
-// Separate group container refs
-let favGroup    = null;
-let recentGroup = null;
-
-// ── localStorage helpers ────────────────────────────────────────
+// ── localStorage helpers ──────────────────────────────────────────
 function lsGet(key, fallback) {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
   catch { return fallback; }
 }
-function lsSet(key, val) {
-  try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
-}
+function lsSet(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
 
-let favorites = lsGet('tw_radio_fav', []);    // array of station names
-let recents   = lsGet('tw_radio_recent', []); // array of {name,url,icon,genre}
-
+let favorites = lsGet('tw_radio_fav', []);
+let recents   = lsGet('tw_radio_recent', []);
 function saveFavorites() { lsSet('tw_radio_fav', favorites); }
 function saveRecents()   { lsSet('tw_radio_recent', recents); }
-
 function isFav(name) { return favorites.includes(name); }
 
 function toggleFav(name) {
-  if (isFav(name)) {
-    favorites = favorites.filter(n => n !== name);
-  } else {
-    favorites = [name, ...favorites];
-  }
+  favorites = isFav(name)
+    ? favorites.filter(n => n !== name)
+    : [name, ...favorites];
   saveFavorites();
-  // update all fav buttons for this station
   allCardEntries.forEach(({ card, station }) => {
-    if (station.name === name) {
-      const btn = card.querySelector('.fav-btn');
-      if (btn) { btn.textContent = isFav(name) ? '★' : '☆'; btn.classList.toggle('on', isFav(name)); }
-    }
+    if (station.name !== name) return;
+    const btn = card.querySelector('.fav-btn');
+    if (btn) { btn.textContent = isFav(name) ? '★' : '☆'; btn.classList.toggle('on', isFav(name)); }
   });
   rebuildFavGroup();
 }
@@ -585,247 +733,212 @@ function addRecent(s) {
   saveRecents();
 }
 
-// ── Build a station card (factory) ─────────────────────────────
+// ── Flatten all stations for lookup ──────────────────────────────
+function findStation(name) {
+  for (const r of REGIONS) {
+    const s = r.stations.find(st => st.name === name);
+    if (s) return s;
+  }
+  return null;
+}
+
+// ── Build card ────────────────────────────────────────────────────
 function buildCard(s) {
   const card = document.createElement('div');
   card.className = 'station-card';
   card.setAttribute('role', 'button');
   card.setAttribute('tabindex', '0');
-  card.setAttribute('data-name', s.name);
-
-  // Health dot
+  card.dataset.name = s.name;
   card.innerHTML =
     `<div class="s-icon">${s.icon}<span class="health-dot loading"></span></div>` +
-    `<div class="s-info">` +
-      `<div class="s-name">${s.name}</div>` +
-      `<div class="s-meta">${s.genre}</div>` +
-    `</div>` +
+    `<div class="s-info"><div class="s-name">${s.name}</div><div class="s-meta">${s.genre}</div></div>` +
     `<div class="eq-bars"><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div></div>` +
-    `<button class="fav-btn ${isFav(s.name) ? 'on' : ''}" aria-label="收藏" title="收藏 / 取消收藏">${isFav(s.name) ? '★' : '☆'}</button>`;
+    `<button class="fav-btn ${isFav(s.name) ? 'on' : ''}" aria-label="收藏">${isFav(s.name) ? '★' : '☆'}</button>`;
 
-  // Fav button — stop propagation so card click doesn't fire
-  const favB = card.querySelector('.fav-btn');
-  favB.addEventListener('click', e => { e.stopPropagation(); toggleFav(s.name); });
-  favB.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); toggleFav(s.name); } });
-
-  // Card click
+  card.querySelector('.fav-btn').addEventListener('click', e => { e.stopPropagation(); toggleFav(s.name); });
   card.addEventListener('click', () => onCardClick(s, card));
   card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onCardClick(s, card); } });
-
   return card;
 }
 
-// ── Build tabs ──────────────────────────────────────────────────
+// ── Build tabs ────────────────────────────────────────────────────
 function buildTabs() {
-  const tabDefs = [
-    { id: 'all',    label: '全部'    },
-    { id: 'fav',    label: '★ 我的最愛' },
-    { id: 'recent', label: '🕘 最近播放' },
+  [
+    { id: 'all',    label: '全部'        },
+    { id: 'fav',    label: '★ 我的最愛'  },
+    { id: 'recent', label: '🕘 最近播放'  },
     ...REGIONS.map(r => ({ id: r.id, label: r.label })),
-  ];
-
-  tabDefs.forEach((t, idx) => {
+  ].forEach((t, idx) => {
     const btn = document.createElement('button');
     btn.className = 'region-tab' + (idx === 0 ? ' active' : '');
     btn.textContent = t.label;
     btn.dataset.rid = t.id;
-    btn.addEventListener('click', () => switchRegion(t.id, btn));
+    btn.addEventListener('click', () => switchRegion(t.id));
     tabsEl.appendChild(btn);
   });
 }
 
-function switchRegion(id, clickedBtn) {
+function switchRegion(id) {
   currentRegion = id;
   document.querySelectorAll('.region-tab').forEach(t => t.classList.toggle('active', t.dataset.rid === id));
-
-  // Clear search when switching tabs
   if (searchInput.value) clearSearch();
-
   document.querySelectorAll('.region-group').forEach(g => {
     const gid = g.dataset.rid;
-    let show = false;
-    if (id === 'all')    show = (gid !== 'fav' && gid !== 'recent');
-    else                  show = (gid === id);
-    g.classList.toggle('visible', show);
+    g.classList.toggle('visible',
+      id === 'all' ? (gid !== 'fav' && gid !== 'recent') : gid === id
+    );
   });
-
   updateActiveStates();
 }
 
-// ── Build main region groups ────────────────────────────────────
+// ── Build region groups ───────────────────────────────────────────
 function buildMainGroups() {
-  // Favorites group
   favGroup = document.createElement('div');
   favGroup.className = 'region-group';
   favGroup.dataset.rid = 'fav';
   listEl.appendChild(favGroup);
   rebuildFavGroup();
 
-  // Recents group
   recentGroup = document.createElement('div');
   recentGroup.className = 'region-group';
   recentGroup.dataset.rid = 'recent';
   listEl.appendChild(recentGroup);
   rebuildRecentGroup();
 
-  // Regional groups
   REGIONS.forEach(region => {
     const group = document.createElement('div');
     group.className = 'region-group visible';
     group.dataset.rid = region.id;
-
     const lbl = document.createElement('div');
     lbl.className = 'region-label';
     lbl.textContent = region.label;
     group.appendChild(lbl);
-
     region.stations.forEach(s => {
       const card = buildCard(s);
       group.appendChild(card);
       allCardEntries.push({ card, station: s });
     });
-
     listEl.appendChild(group);
   });
 }
 
 function rebuildFavGroup() {
-  // Remove old fav card entries
   allCardEntries = allCardEntries.filter(e => e.card.closest('[data-rid="fav"]') === null);
-
   favGroup.innerHTML = '';
   const lbl = document.createElement('div');
   lbl.className = 'region-label';
-  lbl.textContent = favorites.length ? '已收藏的電台' : '我的最愛';
+  lbl.textContent = '已收藏的電台';
   favGroup.appendChild(lbl);
-
   if (!favorites.length) {
-    const hint = document.createElement('div');
-    hint.className = 'empty-hint';
-    hint.textContent = '點擊電台卡片右側的 ☆ 即可收藏，\n方便下次快速找到常聽的電台。';
-    favGroup.appendChild(hint);
+    const h = document.createElement('div');
+    h.className = 'empty-hint';
+    h.textContent = '點擊卡片右側的 ☆ 即可收藏，\n方便快速找到常聽的電台。';
+    favGroup.appendChild(h);
     return;
   }
-
   favorites.forEach(name => {
-    let s = null;
-    REGIONS.forEach(r => { const f = r.stations.find(st => st.name === name); if (f) s = f; });
+    const s = findStation(name);
     if (!s) return;
     const card = buildCard(s);
     favGroup.appendChild(card);
     allCardEntries.push({ card, station: s });
   });
-
   updateActiveStates();
   scheduleHealthCheck();
 }
 
 function rebuildRecentGroup() {
-  // Remove old recent card entries
   allCardEntries = allCardEntries.filter(e => e.card.closest('[data-rid="recent"]') === null);
-
   recentGroup.innerHTML = '';
   const lbl = document.createElement('div');
   lbl.className = 'region-label';
-  lbl.textContent = recents.length ? '最近播放' : '最近播放';
+  lbl.textContent = '最近播放';
   recentGroup.appendChild(lbl);
-
   if (!recents.length) {
-    const hint = document.createElement('div');
-    hint.className = 'empty-hint';
-    hint.textContent = '播放電台後會自動記錄在這裡，\n最多保留 6 個。';
-    recentGroup.appendChild(hint);
+    const h = document.createElement('div');
+    h.className = 'empty-hint';
+    h.textContent = '播放電台後會自動記錄在這裡，\n最多保留 6 個。';
+    recentGroup.appendChild(h);
     return;
   }
-
   recents.forEach(s => {
     const card = buildCard(s);
     recentGroup.appendChild(card);
     allCardEntries.push({ card, station: s });
   });
-
   updateActiveStates();
   scheduleHealthCheck();
 }
 
-// ── Active state ────────────────────────────────────────────────
 function updateActiveStates() {
   allCardEntries.forEach(({ card, station }) => {
-    const isActive  = currentStation && station.name === currentStation.name;
-    const isPlaying2 = isActive && isPlaying;
-    card.classList.toggle('active',  isActive);
-    card.classList.toggle('playing', isPlaying2);
+    const active = currentStation && station.name === currentStation.name;
+    card.classList.toggle('active',  active);
+    card.classList.toggle('playing', active && isPlaying);
   });
 }
 
-// ── Search ──────────────────────────────────────────────────────
+// ── Search ────────────────────────────────────────────────────────
 function handleSearch() {
   const q = searchInput.value.trim().toLowerCase();
   searchClear.style.display = q ? 'flex' : 'none';
-
   if (!q) {
-    // Restore tab view
     allCardEntries.forEach(({ card }) => card.style.display = '');
     document.querySelectorAll('.region-label, .empty-hint').forEach(el => el.style.display = '');
-    switchRegion(currentRegion, null);
+    switchRegion(currentRegion);
     noResult.style.display = 'none';
     return;
   }
-
-  // Show all groups
   document.querySelectorAll('.region-group').forEach(g => g.classList.add('visible'));
   document.querySelectorAll('.region-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.region-label, .empty-hint').forEach(el => el.style.display = 'none');
-
-  let anyVisible = false;
+  let any = false;
   allCardEntries.forEach(({ card, station }) => {
     const match = station.name.toLowerCase().includes(q) || station.genre.toLowerCase().includes(q);
     card.style.display = match ? '' : 'none';
-    if (match) anyVisible = true;
+    if (match) any = true;
   });
-  noResult.style.display = anyVisible ? 'none' : 'block';
+  noResult.style.display = any ? 'none' : 'block';
 }
-
-function clearSearch() {
-  searchInput.value = '';
-  handleSearch();
-  searchInput.blur();
-}
-
+function clearSearch() { searchInput.value = ''; handleSearch(); searchInput.blur(); }
 searchInput.addEventListener('input', handleSearch);
 searchClear.addEventListener('click', clearSearch);
 
-// ── Playback ────────────────────────────────────────────────────
+// ── Playback ──────────────────────────────────────────────────────
 function onCardClick(s, card) {
-  if (currentStation && currentStation.name === s.name) {
-    togglePlay();
-    return;
-  }
+  if (currentStation && currentStation.name === s.name) { togglePlay(); return; }
   loadStation(s, card);
 }
 
 function loadStation(s, card) {
   if (hls) { hls.destroy(); hls = null; }
-  audio.pause();
-  audio.src = '';
+  audio.pause(); audio.src = '';
 
   currentStation = s;
+  lsSet('tw_radio_last', { name: s.name, icon: s.icon });
   addRecent(s);
   rebuildRecentGroup();
 
-  // Clear all active states
   allCardEntries.forEach(({ card: c }) => c.classList.remove('active', 'playing', 'error'));
-  card.classList.add('active');
+  if (card) card.classList.add('active');
 
   playBtn.disabled     = false;
+  drivePlayBtn.disabled = false;
   playBtn.className    = 'loading';
+  drivePlayBtn.className = 'loading';
   nameEl.textContent   = s.name;
   statusEl.textContent = '載入中…';
   statusEl.style.color = '';
   artEl.textContent    = s.icon;
   playerEl.classList.add('active');
+  // Update drive overlay
+  driveNameEl.textContent = s.name;
+  driveArtEl.textContent  = s.icon;
+  driveStatusEl.textContent = '載入中…';
+  updateDriveShortcuts();
 
-  const url   = s.url;
+  // Apply proxy if configured
+  const url   = proxyUrl(s.url);
   const isHLS = /\.(m3u8|m3u)/.test(url) || /playlist|chunklist/.test(url);
 
   if (isHLS) {
@@ -848,121 +961,113 @@ function loadStation(s, card) {
 }
 
 function onPlayError(s, card) {
-  card.classList.add('error');
-  playBtn.className    = '';
-  statusEl.textContent = '播放失敗';
-  statusEl.style.color = '#EF4444';
-  if (window.location.protocol === 'https:' && s.url.startsWith('http:')) {
+  if (card) card.classList.add('error');
+  playBtn.className      = '';
+  drivePlayBtn.className = '';
+  statusEl.textContent   = '播放失敗';
+  driveStatusEl.textContent = '播放失敗';
+  statusEl.style.color   = '#EF4444';
+  // Show guide only if no proxy set and URL is HTTP
+  if (!PROXY_BASE && window.location.protocol === 'https:' && s.url.startsWith('http:')) {
     guideModal.style.display = 'flex';
   }
 }
 
 function togglePlay() {
   if (!currentStation) return;
-  if (isPlaying) { audio.pause(); }
-  else           { audio.play().catch(() => {}); }
+  isPlaying ? audio.pause() : audio.play().catch(() => {});
 }
 
 playBtn.addEventListener('click', togglePlay);
+drivePlayBtn.addEventListener('click', togglePlay);
 
 audio.addEventListener('playing', () => {
   isPlaying = true;
-  playBtn.className    = 'playing';
-  statusEl.textContent = '● 直播中';
-  statusEl.style.color = '';
+  playBtn.className      = 'playing';
+  drivePlayBtn.className = 'playing';
+  statusEl.textContent   = '● 直播中';
+  driveStatusEl.textContent = '● 直播中';
+  statusEl.style.color   = '';
   updateActiveStates();
+  updateDriveShortcuts();
 });
 audio.addEventListener('pause', () => {
   isPlaying = false;
-  playBtn.className    = '';
-  statusEl.textContent = currentStation ? '已暫停' : '尚未播放';
-  statusEl.style.color = '';
+  playBtn.className      = '';
+  drivePlayBtn.className = '';
+  statusEl.textContent   = currentStation ? '已暫停' : '尚未播放';
+  driveStatusEl.textContent = currentStation ? '已暫停' : '';
+  statusEl.style.color   = '';
   updateActiveStates();
+  updateDriveShortcuts();
 });
 audio.addEventListener('waiting', () => {
-  playBtn.className    = 'loading';
-  statusEl.textContent = '緩衝中…';
+  playBtn.className      = 'loading';
+  drivePlayBtn.className = 'loading';
+  statusEl.textContent   = '緩衝中…';
+  driveStatusEl.textContent = '緩衝中…';
 });
 audio.addEventListener('error', () => {
   if (!currentStation) return;
   const entry = allCardEntries.find(e => e.station.name === currentStation.name);
-  if (entry) onPlayError(currentStation, entry.card);
+  onPlayError(currentStation, entry ? entry.card : null);
 });
 
-// Guide modal buttons
 document.getElementById('guide-reload').addEventListener('click', () => location.reload());
 document.getElementById('guide-close').addEventListener('click', () => { guideModal.style.display = 'none'; });
 
-// ── Volume ──────────────────────────────────────────────────────
+// ── Volume ────────────────────────────────────────────────────────
 const savedVol = parseFloat(lsGet('tw_radio_vol', 1));
-audio.volume   = savedVol;
+audio.volume    = savedVol;
 volSlider.value = savedVol;
 volPct.textContent = Math.round(savedVol * 100) + '%';
-
 volSlider.addEventListener('input', () => {
-  const v       = parseFloat(volSlider.value);
-  audio.volume  = v;
+  const v = parseFloat(volSlider.value);
+  audio.volume = v;
   volPct.textContent = Math.round(v * 100) + '%';
   lsSet('tw_radio_vol', v);
 });
 
-// ── Sleep Timer ─────────────────────────────────────────────────
+// ── Sleep Timer ───────────────────────────────────────────────────
 function clearSleepTimer() {
-  if (sleepTimerId)  { clearTimeout(sleepTimerId);   sleepTimerId  = null; }
-  if (sleepFadeId)   { clearInterval(sleepFadeId);   sleepFadeId   = null; }
-  if (sleepTickId)   { clearInterval(sleepTickId);   sleepTickId   = null; }
-  sleepEndTime = null;
-  sleepStepIdx = -1;
+  if (sleepTimerId) { clearTimeout(sleepTimerId);  sleepTimerId = null; }
+  if (sleepFadeId)  { clearInterval(sleepFadeId);  sleepFadeId  = null; }
+  if (sleepTickId)  { clearInterval(sleepTickId);  sleepTickId  = null; }
+  sleepEndTime = null; sleepStepIdx = -1;
 }
-
 function startSleepTimer(minutes) {
   clearSleepTimer();
-  const ms     = minutes * 60 * 1000;
-  sleepEndTime = Date.now() + ms;
-
-  sleepTickId = setInterval(updateSleepDisplay, 1000);
+  sleepEndTime = Date.now() + minutes * 60000;
+  sleepTickId  = setInterval(updateSleepDisplay, 1000);
   updateSleepDisplay();
-
   sleepTimerId = setTimeout(() => {
-    // Fade out over 8 seconds
-    const startVol = audio.volume;
-    const steps    = 16;
-    let   step     = 0;
+    const startVol = audio.volume; const steps = 16; let step = 0;
     sleepFadeId = setInterval(() => {
       step++;
       audio.volume = Math.max(0, startVol * (1 - step / steps));
       if (step >= steps) {
         clearInterval(sleepFadeId); sleepFadeId = null;
         audio.pause();
-        audio.volume  = startVol; // restore
-        volSlider.value = startVol;
+        audio.volume = startVol; volSlider.value = startVol;
         clearSleepTimer();
-        sleepBtn.textContent = '⏱';
-        sleepBtn.classList.remove('active');
-        if (currentStation) statusEl.textContent = '睡眠定時停播';
+        sleepBtn.textContent = '⏱'; sleepBtn.classList.remove('active');
+        if (currentStation) { statusEl.textContent = '睡眠定時停播'; driveStatusEl.textContent = '睡眠定時停播'; }
       }
     }, 500);
-  }, ms);
+  }, minutes * 60000);
 }
-
 function updateSleepDisplay() {
   if (!sleepEndTime) return;
   const rem  = Math.max(0, sleepEndTime - Date.now());
   const mins = Math.floor(rem / 60000);
   const secs = Math.floor((rem % 60000) / 1000);
-  sleepBtn.textContent = mins > 0
-    ? `${mins}m`
-    : `${secs}s`;
+  sleepBtn.textContent = mins > 0 ? `${mins}m` : `${secs}s`;
 }
-
 sleepBtn.addEventListener('click', () => {
-  // Cycle: -1 → 0 → 1 → 2 → 3 → -1 (off)
   sleepStepIdx = (sleepStepIdx + 1) % (SLEEP_STEPS.length + 1);
   if (sleepStepIdx === SLEEP_STEPS.length) {
-    // Back to off
     clearSleepTimer();
-    sleepBtn.textContent = '⏱';
-    sleepBtn.classList.remove('active');
+    sleepBtn.textContent = '⏱'; sleepBtn.classList.remove('active');
     if (currentStation && isPlaying) statusEl.textContent = '● 直播中';
     return;
   }
@@ -972,60 +1077,104 @@ sleepBtn.addEventListener('click', () => {
   if (currentStation) statusEl.textContent = `定時 ${minutes} 分後停播`;
 });
 
-// ── Health Check ────────────────────────────────────────────────
-let healthCheckScheduled = false;
-
+// ── Health Check ──────────────────────────────────────────────────
+let healthScheduled = false;
 function scheduleHealthCheck() {
-  if (healthCheckScheduled) return;
-  healthCheckScheduled = true;
-  // Run after a short delay so UI renders first
-  setTimeout(runHealthChecks, 1000);
+  if (healthScheduled) return;
+  healthScheduled = true;
+  setTimeout(runHealthChecks, 800);
 }
-
 async function runHealthChecks() {
-  const entries = [...allCardEntries]; // snapshot
-  let delay     = 0;
+  const entries = [...allCardEntries];
+  let delay = 0;
   for (const { card, station } of entries) {
     const dot = card.querySelector('.health-dot');
     if (!dot) continue;
-    setTimeout(() => checkStation(station.url, dot), delay);
-    delay += 120; // stagger by 120ms
+    setTimeout(() => checkStation(station, dot), delay);
+    delay += 100;
   }
 }
+async function checkStation(station, dot) {
+  const rawUrl = station.url;
+  const isHttp = rawUrl.startsWith('http:');
 
-async function checkStation(url, dot) {
-  // HTTP streams can't be checked from HTTPS pages (mixed content)
-  if (window.location.protocol === 'https:' && url.startsWith('http:')) {
+  // If proxy is set, all HTTP URLs become HTTPS → checkable
+  // If no proxy and page is HTTPS, HTTP can't be checked
+  if (!PROXY_BASE && window.location.protocol === 'https:' && isHttp) {
     dot.className = 'health-dot http';
-    dot.title = 'HTTP 串流（需允許混合內容）';
+    dot.title     = 'HTTP 串流（設定 PROXY_BASE 後可自動轉換）';
     return;
   }
 
+  const urlToCheck = proxyUrl(rawUrl);
   const ctrl = new AbortController();
   const tid  = setTimeout(() => ctrl.abort(), 8000);
-
   try {
-    await fetch(url, {
-      method: 'GET',
-      mode:   'no-cors',
-      signal: ctrl.signal,
-    });
+    await fetch(urlToCheck, { method: 'GET', mode: 'no-cors', signal: ctrl.signal });
     clearTimeout(tid);
     dot.className = 'health-dot ok';
-    dot.title     = '連線正常';
+    dot.title     = PROXY_BASE && isHttp ? '透過代理連線正常' : '連線正常';
   } catch (e) {
     clearTimeout(tid);
-    if (e.name === 'AbortError') {
-      dot.className = 'health-dot';
-      dot.title     = '連線逾時';
-    } else {
-      dot.className = 'health-dot error';
-      dot.title     = '無法連線';
-    }
+    dot.className = e.name === 'AbortError' ? 'health-dot' : 'health-dot error';
+    dot.title     = e.name === 'AbortError' ? '連線逾時' : '無法連線';
   }
 }
 
-// ── Media Session ───────────────────────────────────────────────
+// ── Driving Mode ──────────────────────────────────────────────────
+function buildDriveShortcuts() {
+  driveGrid.innerHTML = '';
+  DRIVE_SHORTCUTS.forEach(name => {
+    const s = findStation(name);
+    if (!s) return;
+    const btn = document.createElement('button');
+    btn.className = 'drive-shortcut';
+    btn.dataset.name = s.name;
+    btn.innerHTML = `<span class="drive-shortcut-icon">${s.icon}</span><span class="drive-shortcut-name">${s.name.replace(/ FM[\d.]+/, '').replace(/ Best| Best/, '')}</span>`;
+    btn.addEventListener('click', () => {
+      loadStation(s, allCardEntries.find(e => e.station.name === s.name)?.card || null);
+    });
+    driveGrid.appendChild(btn);
+  });
+}
+
+function updateDriveShortcuts() {
+  driveGrid.querySelectorAll('.drive-shortcut').forEach(btn => {
+    const active = currentStation && btn.dataset.name === currentStation.name;
+    btn.classList.toggle('playing-now', active && isPlaying);
+  });
+}
+
+function enterDriveMode() {
+  driveMode = true;
+  driveOverlay.classList.add('visible');
+  driveToggle.classList.add('on');
+  document.body.style.overflow = 'hidden';
+  // Sync drive UI with current state
+  driveArtEl.textContent    = currentStation ? currentStation.icon : '📻';
+  driveNameEl.textContent   = currentStation ? currentStation.name : '請選擇電台';
+  driveStatusEl.textContent = isPlaying ? '● 直播中' : (currentStation ? '已暫停' : '');
+  drivePlayBtn.className    = isPlaying ? 'playing' : (currentStation ? '' : '');
+  drivePlayBtn.disabled     = !currentStation;
+  updateDriveShortcuts();
+}
+
+function exitDriveMode() {
+  driveMode = false;
+  driveOverlay.classList.remove('visible');
+  driveToggle.classList.remove('on');
+  document.body.style.overflow = '';
+}
+
+driveToggle.addEventListener('click', () => driveMode ? exitDriveMode() : enterDriveMode());
+driveExit.addEventListener('click', exitDriveMode);
+
+// Lock screen / orientation when in drive mode (best-effort)
+driveOverlay.addEventListener('click', e => {
+  if (e.target === driveOverlay) exitDriveMode();
+});
+
+// ── Media Session ──────────────────────────────────────────────────
 function setupMediaSession(s) {
   if (!('mediaSession' in navigator)) return;
   navigator.mediaSession.metadata = new MediaMetadata({
@@ -1039,17 +1188,17 @@ function setupMediaSession(s) {
   navigator.mediaSession.setActionHandler('stop',  () => { audio.pause(); audio.src = ''; });
 }
 
-// ── Service Worker ──────────────────────────────────────────────
+// ── Service Worker ─────────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
 
-// ── Init ─────────────────────────────────────────────────────────
+// ── Init ───────────────────────────────────────────────────────────
 buildTabs();
 buildMainGroups();
+buildDriveShortcuts();
 scheduleHealthCheck();
 
-// Restore last played station info (display only, don't auto-play)
 const lastStation = lsGet('tw_radio_last', null);
 if (lastStation) {
   nameEl.textContent   = lastStation.name;
