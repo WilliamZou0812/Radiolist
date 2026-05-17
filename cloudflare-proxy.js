@@ -50,7 +50,7 @@ const ALLOWED_HOSTS = [
 // ── 允許的來源 (CORS) ────────────────────────────────────────────
 // 加入你的網站網址，例如 'https://your-site.com'
 const ALLOWED_ORIGINS = [
-  'https://yourdomain.com',      // ← 改成你的網站
+  'https://williamzou0812.github.io/Radiolist/',      // ← 改成你的網站
   'http://localhost',
   'http://localhost:3000',
   'http://127.0.0.1',
